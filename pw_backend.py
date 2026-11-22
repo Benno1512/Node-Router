@@ -132,8 +132,39 @@ class Graph:
         )
 
 
+def _dump_objects(raw: str) -> list[dict]:
+    """pw-dump-Ausgabe -> Objektliste.
+
+    Ändert sich der Graph während des Dumps (Client kommt/geht, App wird beendet),
+    hängt pw-dump hinter dem vollständigen Array weitere kleine Arrays mit diesen
+    Änderungen an – json.loads meldet dann „Extra data“. Am System beobachtet
+    (PipeWire 1.0.5). Diese Nachträge werden hier wie im --monitor-Modus angewendet:
+    {"id": N, "info": null} ohne Typ = entfernt, sonst hinzugefügt/ersetzt."""
+    dec, pos, blocks = json.JSONDecoder(), 0, []
+    raw = raw or "[]"
+    while True:
+        while pos < len(raw) and raw[pos].isspace():
+            pos += 1
+        if pos >= len(raw):
+            break
+        val, pos = dec.raw_decode(raw, pos)      # wirft bei wirklich kaputtem JSON
+        blocks.append(val)
+    if not blocks:
+        return []
+    by_id: dict = {o.get("id"): o for o in blocks[0] if isinstance(o, dict)}
+    for upd in blocks[1:]:
+        for o in upd if isinstance(upd, list) else []:
+            if not isinstance(o, dict):
+                continue
+            if o.get("info") is None and "type" not in o:
+                by_id.pop(o.get("id"), None)
+            else:
+                by_id[o.get("id")] = o
+    return list(by_id.values())
+
+
 def parse_dump(raw: str) -> Graph:
-    objs = json.loads(raw or "[]")
+    objs = _dump_objects(raw)
     nodes: dict[int, Node] = {}
     ports: list[Port] = []
     links: list[Link] = []

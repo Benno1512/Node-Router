@@ -61,3 +61,31 @@ Getrennte Verbindungen werden als „blockiert“ gemerkt: Legt WirePlumber z. B
 Neustart einer App den Link App → Lautsprecher wieder an, entfernt das Programm ihn
 (nach ca. 0,2 s – so lange ist die App kurz zu hören). Erneutes Verbinden per Drag
 hebt die Blockierung auf. Wirkt nur, solange das Programm läuft.
+
+## Tests
+
+    cd node_router
+    ../.venv/bin/python tests/run_all.py            # alle (ca. 10 Minuten)
+    ../.venv/bin/python tests/run_all.py fx ghost   # nur Tests, deren Name das enthält
+
+- **Router vorher schließen** – der Runner bricht sonst ab. Ein offener Router würde sich alle
+  Test-Objekte in seiner `config.json` merken.
+- Die Tests öffnen echte Fenster (grafische Sitzung nötig) und legen echte PipeWire-Objekte an:
+  virtuelle Test-Mikros `diy_selftest_*`, stumme Test-Streams, Effekt-Prozesse. Sie benutzen eine
+  eigene Config im Temp-Ordner und spielen nichts über die Lautsprecher ab. Danach räumt der
+  Runner Test-Reste auf – deine eigenen Effekt-Bausteine (aus `config.json`) fasst er nicht an.
+- `test_fx_plugins` wird übersprungen, wenn LSP-Plugins oder RNNoise fehlen.
+
+| Test | prüft |
+|---|---|
+| `selftest.py` | Umgebung, Graph lesen, virtuelles Mikro, Verbinden/Trennen, GUI offscreen |
+| `test_menu` | Baustein-Menü: Beschreibungen, gesperrte Einträge, Klick/Loslassen |
+| `test_order` | feste Listen an den Fensterkanten, Sortieren, Größenänderung, kein Zoom |
+| `test_volume` | Lautstärkeregler und Stumm-Knopf gegen `wpctl` |
+| `test_theme` | Dunkel/Hell/System, Umschalten ohne Neustart |
+| `test_ignore` | Ignorieren und wieder anzeigen |
+| `test_ghost` | ausgegraute Karten, gestrichelte Routen, Wiederherstellung |
+| `test_blocked` | blockierte Routen gegen WirePlumber-Neuverbindung |
+| `test_power` | Ein/Aus-Knopf |
+| `test_fx` | Hochpass/EQ/Delay/Hall: Signal, Regler, Verschieben, Neustart, Entfernen |
+| `test_fx_plugins` | Rauschunterdrückung, Kompressor, Ducking mit zwei Eingängen |
