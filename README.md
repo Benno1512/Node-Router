@@ -1,11 +1,36 @@
 # DIY Audio Router (Node-Editor)
 
-Start (nutzt die vorhandene venv mit PySide6):
+PipeWire-Patchbay im Node-RED-Stil: Quellen links, Ziele rechts, dazwischen Verbindungen
+und Effekt-Bausteine. Virtuelle Mikrofone z. B. für Discord.
 
-    cd ~/DIY_Audio_Router/node_router
-    ../.venv/bin/python main.py
+## Installation
 
-Voraussetzung: PipeWire + pipewire-pulse (`pw-dump`, `pw-link`, `pactl`).
+Voraussetzung: Linux mit **PipeWire + pipewire-pulse** und WirePlumber, Python ≥ 3.10.
+Getestet mit Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
+
+    git clone https://github.com/benborofn-lgtm/Audio-Router.git
+    cd Audio-Router
+    ./install.sh --with-rnnoise          # optional: --autostart
+
+`install.sh` prüft die Systempakete, legt `.venv` an, installiert PySide6 und erstellt einen
+Startmenü-Eintrag „DIY Audio Router“. Kein root nötig. Optional:
+
+- `sudo apt install lsp-plugins-ladspa` – für **Kompressor** und **Ducking**
+- `--with-rnnoise` lädt das RNNoise-Plugin (v1.10, Prüfsumme geprüft) nach `plugins/` –
+  für **Rauschunterdrückung**; braucht ggf. `sudo apt install libatomic1`
+- `./install.sh --uninstall` entfernt Startmenü- und Autostart-Eintrag
+
+Manuell starten: `.venv/bin/python main.py` (bzw. `--minimized`: nur ins Tray).
+
+## Hintergrundbetrieb
+
+Fenster schließen = Router läuft im **Tray** weiter (Symbol in der Taskleiste: Öffnen,
+Aktiv/Deaktiviert, Beenden). Nur solange er läuft, werden Routen bei App-Neustarts
+wiederhergestellt, blockierte Routen durchgesetzt und virtuelle Mikros/Effekte nach einem
+Neustart von PipeWire neu angelegt. **⋯ → Beim Anmelden starten** startet ihn automatisch
+(minimiert). Ein zweiter Start öffnet nur das vorhandene Fenster.
+
+## Bedienung
 
 - Links: Eingabegeräte (grün) und Anwendungs-Streams (blau)
 - Rechts: echte Ausgabegeräte (orange) und virtuelle Mikrofone (lila)
@@ -87,5 +112,6 @@ hebt die Blockierung auf. Wirkt nur, solange das Programm läuft.
 | `test_ghost` | ausgegraute Karten, gestrichelte Routen, Wiederherstellung |
 | `test_blocked` | blockierte Routen gegen WirePlumber-Neuverbindung |
 | `test_power` | Ein/Aus-Knopf |
+| `test_background` | Tray, Autostart-Schalter, Einzelinstanz, Neustart der Überwachung, verlorene virtuelle Mikros |
 | `test_fx` | Hochpass/EQ/Delay/Hall: Signal, Regler, Verschieben, Neustart, Entfernen |
 | `test_fx_plugins` | Rauschunterdrückung, Kompressor, Ducking mit zwei Eingängen |

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 import threading
 import time
@@ -16,19 +17,40 @@ from pathlib import Path
 from string import Template
 
 from PySide6.QtCore import QPointF, QProcess, QRectF, Qt, QTimer
-from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QFont,
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
+from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QFont, QIcon,
                            QGuiApplication, QPainter, QPainterPath, QPen)
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsItem,
                                QGraphicsObject, QGraphicsPathItem,
                                QGraphicsScene, QGraphicsView, QHBoxLayout,
                                QInputDialog, QLabel, QMainWindow, QMenu,
-                               QMessageBox, QToolButton, QVBoxLayout, QWidget,
+                               QMessageBox, QSystemTrayIcon, QToolButton,
+                               QVBoxLayout, QWidget,
                                QWidgetAction)
 
 import fx as fxlib
 import pw_backend as pw
 
-CONFIG = Path(__file__).resolve().parent / "config.json"
+# DIY_ROUTER_CONFIG=<Datei> nutzt eine andere Config (z. B. für Tests oder ein zweites Profil)
+CONFIG = Path(os.environ.get("DIY_ROUTER_CONFIG") or Path(__file__).resolve().parent / "config.json")
+APP_ID = "diy-audio-router"
+ICON = Path(__file__).resolve().parent / "icon.svg"
+MAIN = Path(__file__).resolve()
+
+
+def autostart_file() -> Path:
+    base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    return Path(base) / "autostart" / f"{APP_ID}.desktop"
+
+
+def desktop_entry(minimized: bool) -> str:
+    """Desktop-Eintrag (Startmenü/Autostart) für genau diese Installation."""
+    exe = f'"{sys.executable}" "{MAIN}"' + (" --minimized" if minimized else "")
+    return ("[Desktop Entry]\nType=Application\nName=DIY Audio Router\n"
+            "Comment=PipeWire-Patchbay mit virtuellen Mikrofonen und Effekten\n"
+            f"Exec={exe}\nIcon={ICON}\nTerminal=false\n"
+            "Categories=AudioVideo;Audio;Mixer;\n"
+            + ("X-GNOME-Autostart-enabled=true\n" if minimized else ""))
 
 NODE_W, NODE_H, PORT_R = 230, 82, 7
 MARGIN, TOP, ROW = 16, 44, 96          # Rand, Listenbeginn (unter Spaltentitel), Zeilenhöhe
@@ -211,6 +233,10 @@ class Header(QFrame):
         menu.aboutToShow.connect(lambda: self.hidden_menu.setTitle(
             f"Ausgeblendet ({len(win.cfg.ignored)})"))
         menu.addSeparator()
+        self.autostart_action = menu.addAction("Beim Anmelden starten")
+        self.autostart_action.setCheckable(True)
+        self.autostart_action.setChecked(autostart_file().exists())
+        self.autostart_action.toggled.connect(win.set_autostart)
         menu.addAction("Config-Ordner öffnen", win.open_config_dir)
         more.setMenu(menu)
         add = QToolButton(text="＋  Virtuelles Mikrofon")
@@ -1433,9 +1459,13 @@ class RouterView(QGraphicsView):
 # Main window
 # ======================================================================
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, tray: bool = False):
         super().__init__()
         self.setWindowTitle("DIY Audio Router")
+        self.setWindowIcon(QIcon(str(ICON)))
+        self._quitting = False                   # True: wirklich beenden (nicht nur ins Tray)
+        self._shutting = False                   # Monitor nicht mehr neu starten
+        self._vm_tried: dict[str, float] = {}    # virtuelle Mikros: letzter Anlege-Versuch
         self.resize(1000, 700)
         self.cfg = Config()
         self.graph = pw.Graph({}, [])
@@ -1481,8 +1511,79 @@ class MainWindow(QMainWindow):
         self._mon_types: dict[int, str] = {}      # id -> Typ (Entfernungen kommen ohne Typ)
         self.mon = QProcess(self)
         self.mon.readyReadStandardOutput.connect(self._mon_event)
-        self.mon.start("pw-dump", ["--monitor", "--no-colors"])
+        self.mon.finished.connect(self._mon_finished)
+        self._start_mon()
+        self.tray = self._make_tray() if tray and QSystemTrayIcon.isSystemTrayAvailable() else None
+        self._tray_hint_shown = False
         self.refresh(force=True)
+
+    # ---------------- Hintergrundbetrieb
+    def _make_tray(self) -> QSystemTrayIcon:
+        t = QSystemTrayIcon(QIcon(str(ICON)), self)
+        t.setToolTip("DIY Audio Router")
+        m = QMenu(self)
+        m.addAction("Fenster öffnen", self.show_window)
+        m.addSeparator()
+        self.tray_active = m.addAction("Router aktiv")
+        self.tray_active.setCheckable(True)
+        self.tray_active.setChecked(not self.cfg.disabled)
+        self.tray_active.toggled.connect(lambda on: self.set_router_disabled(not on))
+        m.addSeparator()
+        m.addAction("Beenden", self.quit_app)
+        t.setContextMenu(m)
+        t.activated.connect(lambda r: self.toggle_window()
+                            if r == QSystemTrayIcon.ActivationReason.Trigger else None)
+        t.show()
+        return t
+
+    def show_window(self):
+        self.showNormal(); self.raise_(); self.activateWindow()
+
+    def toggle_window(self):
+        if self.isVisible() and not self.isMinimized():
+            self.hide()
+        else:
+            self.show_window()
+
+    def quit_app(self):
+        self._quitting = True
+        self.close()
+        QApplication.quit()
+
+    def set_autostart(self, on: bool):
+        f = autostart_file()
+        if on:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(desktop_entry(minimized=True))
+        else:
+            f.unlink(missing_ok=True)
+
+    # ---------------- PipeWire-Neustart
+    def _start_mon(self):
+        self._mon_buf = ""
+        self._mon_types.clear()
+        self.mon.start("pw-dump", ["--monitor", "--no-colors"])
+
+    def _mon_finished(self, *_):
+        """pw-dump --monitor endet, wenn PipeWire neu startet/abstürzt -> nach
+        kurzer Pause neu starten und vollständig neu einlesen."""
+        if self._shutting:
+            return
+        QTimer.singleShot(1000, lambda: (not self._shutting) and (self._start_mon(), self.refresh(force=True)))
+
+    def _ensure_virtual_mics(self, g: pw.Graph):
+        """Virtuelle Mikros neu anlegen, wenn sie fehlen (z. B. nach Neustart von
+        PipeWire/pipewire-pulse) – auch im deaktivierten Zustand."""
+        names = {n.name for n in g.nodes.values()}
+        now = time.monotonic()
+        for vm in self.cfg.virtual_mics:
+            if vm["name"] in names or now - self._vm_tried.get(vm["name"], -1e9) < 5:
+                continue
+            self._vm_tried[vm["name"]] = now
+            try:
+                pw.create_virtual_mic(vm["label"], vm["name"])
+            except RuntimeError as e:
+                print(f"virtuelles Mikro {vm['name']}: {e}", file=sys.stderr)
 
     _MON_RELEVANT = ("PipeWire:Interface:Node", "PipeWire:Interface:Port",
                      "PipeWire:Interface:Link")
@@ -1513,7 +1614,20 @@ class MainWindow(QMainWindow):
             self.debounce.start()
 
     def closeEvent(self, e):
+        if self.tray is not None and not self._quitting:
+            # Fenster schließen = in den Hintergrund; Routen werden weiter gepflegt
+            e.ignore()
+            self.hide()
+            if not self._tray_hint_shown:
+                self._tray_hint_shown = True
+                self.tray.showMessage("DIY Audio Router läuft weiter",
+                                      "Über das Symbol in der Taskleiste öffnen oder beenden.",
+                                      QIcon(str(ICON)), 4000)
+            return
+        if self.tray is not None:
+            self.tray.hide()
         # nichts mehr tun, sobald das Fenster zu ist (Effekt-Prozesse laufen weiter)
+        self._shutting = True
         self.timer.stop(); self.debounce.stop()
         self.proc.finished.disconnect(self._dump_done)
         self.mon.kill(); self.mon.waitForFinished(1000)
@@ -1548,6 +1662,7 @@ class MainWindow(QMainWindow):
         self._bad_dumps = 0
         self.graph = g
         self.header.set_status(g, ignored=self.cfg.ignored, disabled=self.cfg.disabled)
+        self._ensure_virtual_mics(g)
         if self.cfg.disabled:
             # nichts durchsetzen/wiederherstellen; beim Start im deaktivierten
             # Zustand einmal aufräumen (Effekte könnten noch laufen)
@@ -1662,6 +1777,8 @@ class MainWindow(QMainWindow):
         if self.header.power_button.isChecked() != disabled:
             self.header.power_button.setChecked(disabled)
         self.view.setInteractive(not disabled)
+        if getattr(self, "tray", None) is not None and self.tray_active.isChecked() == disabled:
+            self.tray_active.setChecked(not disabled)
         if disabled:
             self._deactivate()
         else:
@@ -1900,9 +2017,40 @@ class MainWindow(QMainWindow):
 
 
 def main() -> int:
+    minimized = "--minimized" in sys.argv[1:]
     app = QApplication(sys.argv)
     app.setApplicationName("DIY Audio Router")
-    w = MainWindow(); w.show()
+    app.setDesktopFileName(APP_ID)
+    app.setWindowIcon(QIcon(str(ICON)))
+
+    # Nur eine Instanz: läuft schon eine, bringt ein zweiter Start nur deren
+    # Fenster nach vorn (beim Autostart mit --minimized: gar nichts) und endet.
+    name = f"{APP_ID}-{os.getuid()}"
+    sock = QLocalSocket()
+    sock.connectToServer(name)
+    if sock.waitForConnected(500):
+        sock.write(b"noop" if minimized else b"show")
+        sock.flush(); sock.waitForBytesWritten(500); sock.disconnectFromServer()
+        print("DIY Audio Router läuft bereits.", file=sys.stderr)
+        return 0
+    QLocalServer.removeServer(name)               # verwaistes Socket nach Absturz
+    server = QLocalServer()
+    server.listen(name)
+
+    tray = QSystemTrayIcon.isSystemTrayAvailable()
+    app.setQuitOnLastWindowClosed(not tray)       # mit Tray: Schließen = Hintergrund
+    w = MainWindow(tray=tray)
+
+    def on_connect():
+        c = server.nextPendingConnection()
+        def read():
+            if bytes(c.readAll()).startswith(b"show"):
+                w.show_window()
+        c.readyRead.connect(read)
+    server.newConnection.connect(on_connect)
+
+    if not (minimized and tray):
+        w.show()
     return app.exec()
 
 

@@ -33,6 +33,7 @@ TESTS = [  # Reihenfolge: schnell/grundlegend zuerst
     ("ghost", HERE / "test_ghost.py", 150),
     ("blocked", HERE / "test_blocked.py", 150),
     ("power", HERE / "test_power.py", 200),
+    ("background", HERE / "test_background.py", 120),
     ("fx", HERE / "test_fx.py", 300),
     ("fx_plugins", HERE / "test_fx_plugins.py", 300),
 ]

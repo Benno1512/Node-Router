@@ -1,0 +1,3 @@
+# Qt-Oberfläche. Mindestens 6.5 (Qt.ColorScheme für „Design: Wie System“),
+# getestet mit 6.11.
+PySide6>=6.5,<7
