@@ -1,0 +1,19 @@
+# persönliche Einstellungen (Geräte, Routen, Positionen)
+config.json
+selftest_config.json
+
+# Laufzeitdateien der Effekt-Bausteine (werden aus config.json erzeugt)
+fx/
+
+# Fremde Plugins nicht mitliefern – Bezugsquelle steht in der README
+plugins/*.so
+
+# Ausgaben von selftest.py
+selftest.log
+selftest_screenshot.png
+
+# Python / Werkzeuge
+__pycache__/
+*.pyc
+.venv/
+.claude/
