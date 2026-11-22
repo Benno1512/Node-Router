@@ -16,6 +16,7 @@ convolver mit WAV über libsndfile, copy, mixer).
 """
 from __future__ import annotations
 
+import ctypes.util
 import math
 import os
 import random
@@ -27,7 +28,7 @@ import uuid
 import wave
 from pathlib import Path
 
-from paths import FX_DIR, PLUGIN_DIR  # noqa: E402  (Quellcode: neben dem Programm, gebündelt: ~/.local/share)
+from paths import BUNDLED_PLUGINS, FX_DIR, PLUGIN_DIR  # noqa: E402  (Quellcode: neben dem Programm, gebündelt: ~/.local/share)
 PREFIX = "diy_fx_"
 LADSPA_DIRS = ["/usr/lib/ladspa", "/usr/lib/x86_64-linux-gnu/ladspa", "/usr/local/lib/ladspa",
                str(Path.home() / ".ladspa")]
@@ -35,7 +36,7 @@ LSP_URI = "http://lsp-plug.in/plugins/ladspa/"
 
 
 def find_plugin(filename: str) -> str | None:
-    for d in [str(PLUGIN_DIR)] + LADSPA_DIRS:
+    for d in dict.fromkeys([str(PLUGIN_DIR), str(BUNDLED_PLUGINS)] + LADSPA_DIRS):
         p = Path(d) / filename
         if p.is_file():
             return str(p)
@@ -333,10 +334,23 @@ def running_pid(fx_id: str) -> int | None:
     return pid if str(conf_path(fx_id)).encode() in cmd else None
 
 
+def _spawn_env() -> dict:
+    """RNNoise braucht libatomic.so.1, die auf manchen Systemen fehlt. Nur dann
+    die mitgelieferte Kopie (plugins/libatomic.so.1) für den Effekt-Prozess
+    sichtbar machen – vorhandene System-Bibliotheken haben Vorrang."""
+    env = dict(os.environ)
+    if ctypes.util.find_library("atomic") is None:
+        dirs = [str(d) for d in (PLUGIN_DIR, BUNDLED_PLUGINS) if (d / "libatomic.so.1").is_file()]
+        if dirs:
+            env["LD_LIBRARY_PATH"] = ":".join(dirs + [p for p in [env.get("LD_LIBRARY_PATH")] if p])
+    return env
+
+
 def spawn(fx: dict) -> None:
     conf = write_conf(fx)
     p = subprocess.Popen(["pipewire", "-c", str(conf)], stdin=subprocess.DEVNULL,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         env=_spawn_env(),
                          start_new_session=True)   # überlebt das Beenden des Routers
     pid_path(fx["id"]).write_text(str(p.pid))
 

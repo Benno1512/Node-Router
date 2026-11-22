@@ -33,6 +33,7 @@ rm -rf "$B/work" "$B/dist" "$B/AppDir"
 "$B/venv/bin/pyinstaller" --noconfirm --clean --onedir --name "$APP" \
   --distpath "$B/dist" --workpath "$B/work" --specpath "$B" \
   --add-data "$DIR/icon.svg:." \
+  --add-data "$DIR/plugins:plugins" \
   --exclude-module tkinter --exclude-module unittest \
   "$DIR/main.py" >"$B/pyinstaller.log" 2>&1 || { tail -30 "$B/pyinstaller.log"; exit 1; }
 du -sh "$B/dist/$APP" | sed 's/^/  Bundle: /'

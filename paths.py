@@ -36,7 +36,8 @@ def data_dir() -> Path:
 
 CONFIG = Path(os.environ.get("DIY_ROUTER_CONFIG") or config_dir() / "config.json")
 FX_DIR = data_dir() / "fx"
-PLUGIN_DIR = data_dir() / "plugins"
+PLUGIN_DIR = data_dir() / "plugins"          # vom Nutzer abgelegte Plugins
+BUNDLED_PLUGINS = RES / "plugins"            # mitgelieferte (siehe plugins/README.md)
 
 
 def icon_path() -> Path:
@@ -53,6 +54,28 @@ def icon_path() -> Path:
         return dst
     except OSError:
         return src
+
+
+def install_bundled_plugins() -> None:
+    """Gebündelt: mitgelieferte Plugins nach data_dir()/plugins kopieren.
+    Effekt-Prozesse laufen absichtlich weiter, wenn der Router beendet wird – das
+    AppImage wird dann aber ausgehängt. Würden sie das Plugin direkt aus dem
+    AppImage laden, stürzten sie ab, sobald es weg ist."""
+    if not FROZEN or not BUNDLED_PLUGINS.is_dir():
+        return
+    for src in BUNDLED_PLUGINS.rglob("*"):
+        if not src.is_file():
+            continue
+        dst = PLUGIN_DIR / src.relative_to(BUNDLED_PLUGINS)
+        try:
+            if dst.exists() and dst.stat().st_size == src.stat().st_size and dst.read_bytes() == src.read_bytes():
+                continue
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dst.with_suffix(dst.suffix + ".tmp")
+            shutil.copyfile(src, tmp)
+            tmp.replace(dst)                 # atomar: laufende Effekte behalten die alte Datei
+        except OSError:
+            pass
 
 
 def launch_command(minimized: bool = False) -> str:

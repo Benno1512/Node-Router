@@ -3,6 +3,20 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
 [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.1.2] – 2026-11-23
+
+### Neu
+- **Effekt-Plugins mitgeliefert** (in `plugins/` und im AppImage): RNNoise (Rauschunterdrückung)
+  und LSP (Kompressor, Ducking) – keine Zusatzinstallation mehr nötig; inkl. `libatomic`
+  als Rückfall für Systeme ohne diese Bibliothek. Lizenzen und Herkunft: `plugins/README.md`
+- **`install-deps.sh`**: installiert fehlende Systempakete (PipeWire, pipewire-pulse,
+  WirePlumber, pactl) für Ubuntu/Debian/Mint, Fedora, Arch/Manjaro, openSUSE
+- **Startprüfung**: fehlt etwas, zeigt die App beim Start den passenden Befehl
+  (mit „Befehl kopieren“)
+
+### Geändert
+- `install.sh --with-rnnoise` ist nicht mehr nötig (Option wird ignoriert)
+
 ## [0.1.1] – 2026-11-23
 
 ### Neu
@@ -50,5 +64,6 @@ Erste Version.
 - Nur getestet mit Ubuntu 24.04, PipeWire 1.0.5, WirePlumber 0.4.17
 - Noch nicht mit Discord und echter Sprache getestet (siehe `TESTING.md`)
 
+[0.1.2]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.2
 [0.1.1]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.1
 [0.1.0]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.0

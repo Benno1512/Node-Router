@@ -5,8 +5,7 @@ selftest_config.json
 # Laufzeitdateien der Effekt-Bausteine (werden aus config.json erzeugt)
 fx/
 
-# Fremde Plugins nicht mitliefern – Bezugsquelle steht in der README
-plugins/*.so
+# Plugins in plugins/ werden mitgeliefert (siehe plugins/README.md)
 
 # Ausgaben von selftest.py
 selftest.log

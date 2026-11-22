@@ -30,13 +30,14 @@ from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsItem,
                                QVBoxLayout, QWidget,
                                QWidgetAction)
 
+import deps
 import fx as fxlib
 import paths
 import pw_backend as pw
 
 # DIY_ROUTER_CONFIG=<Datei> nutzt eine andere Config (z. B. für Tests oder ein zweites Profil)
 CONFIG = paths.CONFIG
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 APP_ID = "diy-audio-router"
 REPO_URL = "https://github.com/benborofn-lgtm/Audio-Router"
 ICON = paths.RES / "icon.svg"
@@ -1466,7 +1467,7 @@ class RouterView(QGraphicsView):
 # Main window
 # ======================================================================
 class MainWindow(QMainWindow):
-    def __init__(self, tray: bool = False):
+    def __init__(self, tray: bool = False, check_system: bool = False):
         super().__init__()
         self.setWindowTitle("DIY Audio Router")
         self.setWindowIcon(QIcon(str(ICON)))
@@ -1523,6 +1524,26 @@ class MainWindow(QMainWindow):
         self.tray = self._make_tray() if tray and QSystemTrayIcon.isSystemTrayAvailable() else None
         self._tray_hint_shown = False
         self.refresh(force=True)
+        if check_system:                         # fehlt PipeWire & Co.? -> Hinweis mit Befehl
+            QTimer.singleShot(300, self.check_system)
+
+    def check_system(self) -> list[str]:
+        probs = deps.problems()
+        if probs:
+            box = QMessageBox(QMessageBox.Warning, "DIY Audio Router – es fehlt etwas",
+                              deps.help_text(probs), parent=self)
+            cmd = deps.install_command()
+            if cmd:
+                copy = box.addButton("Befehl kopieren", QMessageBox.ActionRole)
+                copy.clicked.disconnect()
+                copy.clicked.connect(lambda: QApplication.clipboard().setText(
+                    f"{cmd} && {deps.SERVICES}"))
+            box.addButton(QMessageBox.Close)
+            box.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            box.open()
+            self._deps_box = box
+            self.statusBar().showMessage("Es fehlen Systempakete – siehe Hinweis")
+        return probs
 
     # ---------------- Hintergrundbetrieb
     def _make_tray(self) -> QSystemTrayIcon:
@@ -2040,6 +2061,7 @@ def main() -> int:
     paths.clean_host_env()                        # Kindprozesse: System-Umgebung
     CONFIG.parent.mkdir(parents=True, exist_ok=True)
     paths.icon_path()                             # gebündelt: Icon dauerhaft ablegen (Desktop-Einträge)
+    paths.install_bundled_plugins()               # gebündelt: Plugins dauerhaft ablegen (laufende Effekte)
     minimized = "--minimized" in sys.argv[1:]
     app = QApplication(sys.argv)
     app.setApplicationName("DIY Audio Router")
@@ -2062,7 +2084,7 @@ def main() -> int:
 
     tray = QSystemTrayIcon.isSystemTrayAvailable()
     app.setQuitOnLastWindowClosed(not tray)       # mit Tray: Schließen = Hintergrund
-    w = MainWindow(tray=tray)
+    w = MainWindow(tray=tray, check_system=True)
 
     def on_connect():
         c = server.nextPendingConnection()

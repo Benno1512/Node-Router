@@ -11,12 +11,32 @@ Unter [Releases](https://github.com/benborofn-lgtm/Audio-Router/releases) die Da
     chmod +x DIY-Audio-Router-*-x86_64.AppImage     # oder: Rechtsklick → Eigenschaften → Ausführbar
     ./DIY-Audio-Router-*-x86_64.AppImage
 
-Keine Installation, kein Python nötig. Voraussetzungen auf dem System: PipeWire mit
-pipewire-pulse und WirePlumber (wie bei jedem aktuellen Ubuntu/Fedora) und mindestens
-glibc 2.39 (z. B. Ubuntu 24.04, Fedora 40). Einstellungen liegen in
-`~/.config/diy-audio-router/`, Effekt-Dateien und das RNNoise-Plugin in
-`~/.local/share/diy-audio-router/` (dorthin `plugins/librnnoise_ladspa.so` legen).
+Keine Installation, kein Python nötig – Qt und alle Effekt-Plugins (Rauschunterdrückung,
+Kompressor, Ducking) sind enthalten. Einstellungen liegen in `~/.config/diy-audio-router/`,
+Effekt-Dateien in `~/.local/share/diy-audio-router/`.
 Selbst bauen: `./build_appimage.sh` (lädt PySide6, PyInstaller und appimagetool).
+
+## Was du brauchst
+
+Vom System kommt nur der **Sound-Server**: PipeWire mit pipewire-pulse und WirePlumber
+plus deren Kommandozeilen-Werkzeuge (`pw-link`, `pactl` …). Auf aktuellen Desktop-Systemen
+ist das vorinstalliert (Ubuntu ab 22.10, Fedora ab 34, Linux Mint 22, Manjaro/Arch mit
+KDE/GNOME). Fehlt etwas, sagt die App beim Start Bescheid und zeigt den Befehl. Oder:
+
+    ./install-deps.sh          # erkennt die Distribution, fragt vor dem Installieren
+
+Das Skript führt je nach System aus (danach einmal ab- und wieder anmelden):
+
+| System | Befehl |
+|---|---|
+| Ubuntu, Debian, Mint | `sudo apt install pipewire pipewire-pulse pipewire-bin wireplumber pulseaudio-utils libsndfile1 libxcb-cursor0` |
+| Fedora | `sudo dnf install pipewire pipewire-pulseaudio pipewire-utils wireplumber pulseaudio-utils libsndfile xcb-util-cursor` |
+| Arch, Manjaro | `sudo pacman -S --needed pipewire pipewire-pulse wireplumber libpulse libsndfile xcb-util-cursor` |
+| openSUSE | `sudo zypper install pipewire pipewire-pulseaudio pipewire-tools wireplumber pulseaudio-utils libsndfile1 libxcb-cursor0` |
+| alle | `systemctl --user enable --now pipewire pipewire-pulse wireplumber` |
+
+Getestet ist nur Ubuntu 24.04; die übrigen Paketnamen stammen aus den offiziellen
+Paketquellen. Das AppImage braucht außerdem glibc ≥ 2.39 (Ubuntu 24.04, Fedora 40 und neuer).
 
 ## Installation aus dem Quellcode
 
@@ -25,14 +45,12 @@ Getestet mit Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
 
     git clone https://github.com/benborofn-lgtm/Audio-Router.git
     cd Audio-Router
-    ./install.sh --with-rnnoise          # optional: --autostart
+    ./install.sh                         # optional: --autostart
 
 `install.sh` prüft die Systempakete, legt `.venv` an, installiert PySide6 und erstellt einen
 Startmenü-Eintrag „DIY Audio Router“. Kein root nötig. Optional:
 
-- `sudo apt install lsp-plugins-ladspa` – für **Kompressor** und **Ducking**
-- `--with-rnnoise` lädt das RNNoise-Plugin (v1.10, Prüfsumme geprüft) nach `plugins/` –
-  für **Rauschunterdrückung**; braucht ggf. `sudo apt install libatomic1`
+- Die Effekt-Plugins liegen bereits in `plugins/` (siehe `plugins/README.md`)
 - `./install.sh --uninstall` entfernt Startmenü- und Autostart-Eintrag
 
 Manuell starten: `.venv/bin/python main.py` (bzw. `--minimized`: nur ins Tray).
@@ -148,6 +166,6 @@ hebt die Blockierung auf. Wirkt nur, solange das Programm läuft.
 ## Lizenz
 
 GPL-3.0-or-later, siehe [LICENSE](LICENSE). Änderungen: [CHANGELOG.md](CHANGELOG.md).
-Effekte nutzen [LSP-Plugins](https://lsp-plug.in/) und
-[RNNoise](https://github.com/werman/noise-suppression-for-voice); beide werden separat
-installiert und nicht mit diesem Repository verteilt.
+Mitgelieferte Plugins anderer Projekte ([LSP-Plugins](https://lsp-plug.in/), LGPL-3.0;
+[RNNoise](https://github.com/werman/noise-suppression-for-voice), GPL-3.0; libatomic aus GCC)
+stehen unter ihren eigenen Lizenzen – Details, Versionen und Quellen in `plugins/README.md`.

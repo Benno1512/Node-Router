@@ -27,6 +27,7 @@ SKIP = 77
 
 TESTS = [  # Reihenfolge: schnell/grundlegend zuerst
     ("selftest", NR / "selftest.py", 90),
+    ("deps", HERE / "test_deps.py", 90),
     ("menu", HERE / "test_menu.py", 90),
     ("order", HERE / "test_order.py", 150),
     ("volume", HERE / "test_volume.py", 150),

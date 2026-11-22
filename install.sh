@@ -5,7 +5,6 @@
 #
 #   ./install.sh                  venv + PySide6, Startmenü-Eintrag
 #   ./install.sh --autostart      zusätzlich beim Anmelden (minimiert) starten
-#   ./install.sh --with-rnnoise   RNNoise-Plugin (Rauschunterdrückung) herunterladen
 #   ./install.sh --uninstall      Startmenü- und Autostart-Eintrag entfernen
 #                                 (Programm, venv und config.json bleiben)
 #
@@ -17,16 +16,14 @@ APP_ID="diy-audio-router"
 VENV="${VENV:-$DIR/.venv}"
 APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 AUTOSTART_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
-RNNOISE_URL="https://github.com/werman/noise-suppression-for-voice/releases/download/v1.10/linux-rnnoise.zip"
-RNNOISE_SHA256="811390b6eb6e28dde023c70590c74d26e74ebb2e595bcf4b95af2341db160e99"
 
-AUTOSTART=0; RNNOISE=0; UNINSTALL=0
+AUTOSTART=0; UNINSTALL=0
 for a in "$@"; do
   case "$a" in
     --autostart) AUTOSTART=1 ;;
-    --with-rnnoise) RNNOISE=1 ;;
+    --with-rnnoise) ;;   # veraltet: Plugins sind jetzt mitgeliefert
     --uninstall) UNINSTALL=1 ;;
-    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "Unbekannte Option: $a (siehe --help)"; exit 2 ;;
   esac
 done
@@ -49,7 +46,7 @@ done
 if pactl info 2>/dev/null | grep -q "PipeWire"; then ok "pipewire-pulse läuft"
 else fail "pipewire-pulse läuft nicht (Paket pipewire-pulse)"; missing=1; fi
 if [ "$missing" = 1 ]; then
-  echo; echo "Ubuntu/Debian: sudo apt install pipewire pipewire-pulse pipewire-bin wireplumber pulseaudio-utils"
+  echo; echo "Fehlende Systempakete installieren:  ./install-deps.sh"
   exit 1
 fi
 PY="$(command -v python3 || true)"
@@ -70,29 +67,10 @@ else
   ok "PySide6 installiert"
 fi
 
-echo "== Optionale Effekt-Plugins"
-if [ -f /usr/lib/ladspa/lsp-plugins-ladspa.so ] || [ -f /usr/lib/x86_64-linux-gnu/ladspa/lsp-plugins-ladspa.so ]; then
-  ok "LSP-Plugins (Kompressor, Ducking)"
-else
-  warn "LSP-Plugins fehlen – Kompressor/Ducking ausgegraut. Nachinstallieren: sudo apt install lsp-plugins-ladspa"
-fi
-if [ "$RNNOISE" = 1 ] && [ ! -f "$DIR/plugins/librnnoise_ladspa.so" ]; then
-  tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-  echo "  lade $RNNOISE_URL"
-  curl -fsSL -o "$tmp/rnnoise.zip" "$RNNOISE_URL"
-  echo "$RNNOISE_SHA256  $tmp/rnnoise.zip" | sha256sum -c --quiet - || { fail "Prüfsumme falsch – abgebrochen"; exit 1; }
-  mkdir -p "$DIR/plugins"
-  "$PY" -I -c 'import sys, zipfile; open(sys.argv[2], "wb").write(zipfile.ZipFile(sys.argv[1]).read("linux-rnnoise/ladspa/librnnoise_ladspa.so"))' \
-        "$tmp/rnnoise.zip" "$DIR/plugins/librnnoise_ladspa.so"
-  ok "RNNoise-Plugin nach plugins/ entpackt (v1.10, Prüfsumme ok)"
-fi
-if [ -f "$DIR/plugins/librnnoise_ladspa.so" ]; then
-  if ldd "$DIR/plugins/librnnoise_ladspa.so" | grep -q "not found"; then
-    warn "RNNoise: Bibliothek fehlt ($(ldd "$DIR/plugins/librnnoise_ladspa.so" | awk '/not found/{print $1}' | paste -sd' ')) – meist: sudo apt install libatomic1"
-  else ok "RNNoise (Rauschunterdrückung)"; fi
-else
-  warn "RNNoise fehlt – Rauschunterdrückung ausgegraut. Mit ./install.sh --with-rnnoise herunterladen"
-fi
+echo "== Effekt-Plugins (mitgeliefert in plugins/)"
+for f in librnnoise_ladspa.so lsp-plugins-ladspa.so; do
+  if [ -f "$DIR/plugins/$f" ]; then ok "$f"; else warn "$f fehlt im Ordner plugins/ – Repository vollständig?"; fi
+done
 
 echo "== Startmenü"
 entry() {   # $1 = 1: minimiert starten
