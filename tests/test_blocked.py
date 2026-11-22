@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Blocked routes: WP link app->speaker disconnected, app restart -> link removed again."""
 import json, subprocess, sys, time
 from pathlib import Path

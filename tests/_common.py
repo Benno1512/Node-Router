@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Gemeinsame Hilfen für die Tests.
 
 Die Tests öffnen echte Fenster und legen echte PipeWire-Objekte an

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Ghost cards: test app (pacat) disappears/returns; test mic as target. Temp config."""
 import json, subprocess, sys, time
 from pathlib import Path

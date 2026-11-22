@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Effekt-Bausteine als PipeWire filter-chain.
 
 Jeder Baustein läuft als eigener `pipewire -c <conf>`-Prozess (losgelöst vom

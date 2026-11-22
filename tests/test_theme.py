@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Theme test: render dark + light with test mic, test app, a ghost and wires; switching + persistence."""
 import json, subprocess, sys, time
 from pathlib import Path

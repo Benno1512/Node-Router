@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 # DIY Audio Router – Installation für den aktuellen Benutzer (kein root nötig).
 #
 #   ./install.sh                  venv + PySide6, Startmenü-Eintrag

@@ -118,3 +118,21 @@ hebt die Blockierung auf. Wirkt nur, solange das Programm läuft.
 | `test_background` | Tray, Autostart-Schalter, Einzelinstanz, Neustart der Überwachung, verlorene virtuelle Mikros |
 | `test_fx` | Hochpass/EQ/Delay/Hall: Signal, Regler, Verschieben, Neustart, Entfernen |
 | `test_fx_plugins` | Rauschunterdrückung, Kompressor, Ducking mit zwei Eingängen |
+
+## Bekannte Grenzen
+
+- Getestet nur mit **Ubuntu 24.04, PipeWire 1.0.5, WirePlumber 0.4.17**. Neuere Versionen
+  (insbesondere WirePlumber 0.5 mit anderer Konfiguration) sind ungetestet.
+- Noch **nicht mit Discord und echter Sprache** getestet – Checkliste: [TESTING.md](TESTING.md).
+- Routen wiederherstellen, blockierte Routen und das Neuanlegen von Mikros/Effekten nach einem
+  PipeWire-Neustart funktionieren nur, solange der Router läuft (Tray/Autostart nutzen).
+- Ist eine blockierte App neu gestartet, ist sie bis zu ca. 0,3 s über den Standard-Lautsprecher
+  zu hören, bevor der Router die WirePlumber-Verbindung trennt.
+- Lautstärke pro **Verbindung** gibt es noch nicht (nur pro Gerät/App).
+
+## Lizenz
+
+GPL-3.0-or-later, siehe [LICENSE](LICENSE). Änderungen: [CHANGELOG.md](CHANGELOG.md).
+Effekte nutzen [LSP-Plugins](https://lsp-plug.in/) und
+[RNNoise](https://github.com/werman/noise-suppression-for-voice); beide werden separat
+installiert und nicht mit diesem Repository verteilt.

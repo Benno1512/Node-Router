@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Effect blocks end-to-end in the real window (temp config, test objects only, silent)."""
 import json, math, os, struct, subprocess, sys, time, wave
 from pathlib import Path

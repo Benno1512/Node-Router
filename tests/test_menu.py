@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 import sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))

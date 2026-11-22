@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Rauschunterdrückung, Kompressor, Ducking (2 Eingänge) im echten Fenster. Temp-Config, stumm."""
 import json, math, random, struct, subprocess, sys, time, wave
 from pathlib import Path

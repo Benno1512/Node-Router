@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Alle Tests nacheinander ausführen.
 
     cd node_router && ../.venv/bin/python tests/run_all.py            # alle

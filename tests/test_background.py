@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Hintergrundbetrieb: Tray, Autostart-Schalter, Einzelinstanz, Neustart der
 PipeWire-Überwachung, virtuelle Mikros nach Verlust neu anlegen.
 Simuliert einen PipeWire-Neustart (Monitor-Prozess beenden, Mikro-Modul entladen),

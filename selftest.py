@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Selbsttest für den DIY Audio Router. Schreibt alles nach selftest.log."""
 from __future__ import annotations
 

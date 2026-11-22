@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """Tests the two sortable lists in a real window with a temp config."""
 import json, subprocess, sys, time
 from pathlib import Path

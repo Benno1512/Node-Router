@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
 """DIY Audio Router – Node-RED-style PipeWire patchbay.
 
 Left:  input devices + application audio streams
@@ -33,7 +35,9 @@ import pw_backend as pw
 
 # DIY_ROUTER_CONFIG=<Datei> nutzt eine andere Config (z. B. für Tests oder ein zweites Profil)
 CONFIG = Path(os.environ.get("DIY_ROUTER_CONFIG") or Path(__file__).resolve().parent / "config.json")
+__version__ = "0.1.0"
 APP_ID = "diy-audio-router"
+REPO_URL = "https://github.com/benborofn-lgtm/Audio-Router"
 ICON = Path(__file__).resolve().parent / "icon.svg"
 MAIN = Path(__file__).resolve()
 
@@ -238,6 +242,8 @@ class Header(QFrame):
         self.autostart_action.setChecked(autostart_file().exists())
         self.autostart_action.toggled.connect(win.set_autostart)
         menu.addAction("Config-Ordner öffnen", win.open_config_dir)
+        menu.addSeparator()
+        menu.addAction("Über DIY Audio Router", win.show_about)
         more.setMenu(menu)
         add = QToolButton(text="＋  Virtuelles Mikrofon")
         add.setObjectName("Primary"); add.setCursor(Qt.PointingHandCursor)
@@ -2007,6 +2013,16 @@ class MainWindow(QMainWindow):
         self.cfg.save()
         self.apply_theme()
 
+    def show_about(self):
+        QMessageBox.about(
+            self, "Über DIY Audio Router",
+            f"<b>DIY Audio Router</b> {__version__}<br><br>"
+            "PipeWire-Patchbay mit virtuellen Mikrofonen und Effekt-Bausteinen.<br><br>"
+            f'<a href="{REPO_URL}">{REPO_URL}</a><br><br>'
+            "Lizenz: GPL-3.0-or-later – ohne jede Gewährleistung.<br>"
+            "Effekte nutzen PipeWire filter-chain, LSP-Plugins und RNNoise "
+            "(werman/noise-suppression-for-voice), die separat installiert werden.")
+
     def open_config_dir(self):
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
@@ -2017,6 +2033,9 @@ class MainWindow(QMainWindow):
 
 
 def main() -> int:
+    if "--version" in sys.argv[1:]:
+        print(f"DIY Audio Router {__version__}")
+        return 0
     minimized = "--minimized" in sys.argv[1:]
     app = QApplication(sys.argv)
     app.setApplicationName("DIY Audio Router")
