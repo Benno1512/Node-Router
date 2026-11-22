@@ -38,6 +38,7 @@ TESTS = [  # Reihenfolge: schnell/grundlegend zuerst
     ("background", HERE / "test_background.py", 120),
     ("fx", HERE / "test_fx.py", 300),
     ("fx_plugins", HERE / "test_fx_plugins.py", 300),
+    ("appimage", HERE / "test_appimage.py", 180),   # übersprungen ohne Build
 ]
 
 

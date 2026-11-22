@@ -31,14 +31,15 @@ from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsItem,
                                QWidgetAction)
 
 import fx as fxlib
+import paths
 import pw_backend as pw
 
 # DIY_ROUTER_CONFIG=<Datei> nutzt eine andere Config (z. B. für Tests oder ein zweites Profil)
-CONFIG = Path(os.environ.get("DIY_ROUTER_CONFIG") or Path(__file__).resolve().parent / "config.json")
-__version__ = "0.1.0"
+CONFIG = paths.CONFIG
+__version__ = "0.1.1"
 APP_ID = "diy-audio-router"
 REPO_URL = "https://github.com/benborofn-lgtm/Audio-Router"
-ICON = Path(__file__).resolve().parent / "icon.svg"
+ICON = paths.RES / "icon.svg"
 MAIN = Path(__file__).resolve()
 
 
@@ -49,10 +50,10 @@ def autostart_file() -> Path:
 
 def desktop_entry(minimized: bool) -> str:
     """Desktop-Eintrag (Startmenü/Autostart) für genau diese Installation."""
-    exe = f'"{sys.executable}" "{MAIN}"' + (" --minimized" if minimized else "")
+    exe = paths.launch_command(minimized)
     return ("[Desktop Entry]\nType=Application\nName=DIY Audio Router\n"
             "Comment=PipeWire-Patchbay mit virtuellen Mikrofonen und Effekten\n"
-            f"Exec={exe}\nIcon={ICON}\nTerminal=false\n"
+            f"Exec={exe}\nIcon={paths.icon_path()}\nTerminal=false\n"
             "Categories=AudioVideo;Audio;Mixer;\n"
             + ("X-GNOME-Autostart-enabled=true\n" if minimized else ""))
 
@@ -2036,6 +2037,9 @@ def main() -> int:
     if "--version" in sys.argv[1:]:
         print(f"DIY Audio Router {__version__}")
         return 0
+    paths.clean_host_env()                        # Kindprozesse: System-Umgebung
+    CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    paths.icon_path()                             # gebündelt: Icon dauerhaft ablegen (Desktop-Einträge)
     minimized = "--minimized" in sys.argv[1:]
     app = QApplication(sys.argv)
     app.setApplicationName("DIY Audio Router")

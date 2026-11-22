@@ -27,8 +27,7 @@ import uuid
 import wave
 from pathlib import Path
 
-FX_DIR = Path(__file__).resolve().parent / "fx"
-PLUGIN_DIR = Path(__file__).resolve().parent / "plugins"
+from paths import FX_DIR, PLUGIN_DIR  # noqa: E402  (Quellcode: neben dem Programm, gebündelt: ~/.local/share)
 PREFIX = "diy_fx_"
 LADSPA_DIRS = ["/usr/lib/ladspa", "/usr/lib/x86_64-linux-gnu/ladspa", "/usr/local/lib/ladspa",
                str(Path.home() / ".ladspa")]
@@ -259,7 +258,7 @@ def ir_path(fx_id: str) -> Path:
 
 
 def write_conf(fx: dict) -> Path:
-    FX_DIR.mkdir(exist_ok=True)
+    FX_DIR.mkdir(parents=True, exist_ok=True)
     fid, kind, params = fx["id"], fx["type"], fx["params"]
     if kind == "reverb":
         make_ir(ir_path(fid), float(params["decay"]))

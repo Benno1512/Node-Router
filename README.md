@@ -3,7 +3,22 @@
 PipeWire-Patchbay im Node-RED-Stil: Quellen links, Ziele rechts, dazwischen Verbindungen
 und Effekt-Bausteine. Virtuelle Mikrofone z. B. für Discord.
 
-## Installation
+## Als einzelne Datei (AppImage)
+
+Unter [Releases](https://github.com/benborofn-lgtm/Audio-Router/releases) die Datei
+`DIY-Audio-Router-<version>-x86_64.AppImage` herunterladen, dann:
+
+    chmod +x DIY-Audio-Router-*-x86_64.AppImage     # oder: Rechtsklick → Eigenschaften → Ausführbar
+    ./DIY-Audio-Router-*-x86_64.AppImage
+
+Keine Installation, kein Python nötig. Voraussetzungen auf dem System: PipeWire mit
+pipewire-pulse und WirePlumber (wie bei jedem aktuellen Ubuntu/Fedora) und mindestens
+glibc 2.39 (z. B. Ubuntu 24.04, Fedora 40). Einstellungen liegen in
+`~/.config/diy-audio-router/`, Effekt-Dateien und das RNNoise-Plugin in
+`~/.local/share/diy-audio-router/` (dorthin `plugins/librnnoise_ladspa.so` legen).
+Selbst bauen: `./build_appimage.sh` (lädt PySide6, PyInstaller und appimagetool).
+
+## Installation aus dem Quellcode
 
 Voraussetzung: Linux mit **PipeWire + pipewire-pulse** und WirePlumber, Python ≥ 3.10.
 Getestet mit Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
