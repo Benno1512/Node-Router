@@ -100,6 +100,9 @@ hebt die Blockierung auf. Wirkt nur, solange das Programm läuft.
   eigene Config im Temp-Ordner und spielen nichts über die Lautsprecher ab. Danach räumt der
   Runner Test-Reste auf – deine eigenen Effekt-Bausteine (aus `config.json`) fasst er nicht an.
 - `test_fx_plugins` wird übersprungen, wenn LSP-Plugins oder RNNoise fehlen.
+- `tests/test_pipewire_restart.py --ja-wirklich` startet PipeWire **echt** neu (kurze Ton-
+  unterbrechung für alle Programme) und prüft, dass Mikro, Effekt, Routen und Ton zurückkommen.
+  Nicht Teil von `run_all.py`; nur manuell ausführen.
 
 | Test | prüft |
 |---|---|
