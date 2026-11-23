@@ -39,7 +39,7 @@ import pw_backend as pw
 CONFIG = paths.CONFIG
 __version__ = "0.1.3"
 APP_ID = "node-router"
-REPO_URL = "https://github.com/benborofn-lgtm/Audio-Router"
+REPO_URL = "https://github.com/benborofn-lgtm/Node-Router"
 ICON = paths.RES / "icon.svg"
 MAIN = Path(__file__).resolve()
 

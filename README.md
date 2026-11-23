@@ -5,7 +5,7 @@ und Effekt-Bausteine. Virtuelle Mikrofone z. B. für Discord.
 
 ## Als einzelne Datei (AppImage)
 
-Unter [Releases](https://github.com/benborofn-lgtm/Audio-Router/releases) die Datei
+Unter [Releases](https://github.com/benborofn-lgtm/Node-Router/releases) die Datei
 `Node-Router-<version>-x86_64.AppImage` herunterladen, dann:
 
     chmod +x Node-Router-*-x86_64.AppImage     # oder: Rechtsklick → Eigenschaften → Ausführbar
@@ -43,8 +43,8 @@ Paketquellen. Das AppImage braucht außerdem glibc ≥ 2.39 (Ubuntu 24.04, Fedor
 Voraussetzung: Linux mit **PipeWire + pipewire-pulse** und WirePlumber, Python ≥ 3.10.
 Getestet mit Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
 
-    git clone https://github.com/benborofn-lgtm/Audio-Router.git
-    cd Audio-Router
+    git clone https://github.com/benborofn-lgtm/Node-Router.git
+    cd Node-Router
     ./install.sh                         # optional: --autostart
 
 `install.sh` prüft die Systempakete, legt `.venv` an, installiert PySide6 und erstellt einen

@@ -74,7 +74,7 @@ Erste Version.
 - Nur getestet mit Ubuntu 24.04, PipeWire 1.0.5, WirePlumber 0.4.17
 - Noch nicht mit Discord und echter Sprache getestet (siehe `TESTING.md`)
 
-[0.1.3]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.3
-[0.1.2]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.2
-[0.1.1]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.1
-[0.1.0]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.0
+[0.1.3]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.3
+[0.1.2]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.2
+[0.1.1]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.1
+[0.1.0]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.0
