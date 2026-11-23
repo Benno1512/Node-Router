@@ -9,7 +9,7 @@ for Discord.
 ## Single file (AppImage)
 
 Download `Node-Router-<version>-x86_64.AppImage` from
-[Releases](https://github.com/benborofn-lgtm/Node-Router/releases), then run:
+[Releases](https://github.com/Benno1512/Node-Router/releases), then run:
 
     chmod +x Node-Router-*-x86_64.AppImage     # or: right-click → Properties → Executable
     ./Node-Router-*-x86_64.AppImage
@@ -47,7 +47,7 @@ official repositories. The AppImage also needs glibc ≥ 2.39 (Ubuntu 24.04, Fed
 You need Linux with **PipeWire + pipewire-pulse** and WirePlumber, and Python ≥ 3.10.
 Tested on Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
 
-    git clone https://github.com/benborofn-lgtm/Node-Router.git
+    git clone https://github.com/Benno1512/Node-Router.git
     cd Node-Router
     ./install.sh                         # optional: --autostart
 

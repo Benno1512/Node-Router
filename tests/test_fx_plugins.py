@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Noise suppression, compressor, ducking (2 inputs) in the real window. Temp config, silent."""
 import json, math, random, struct, subprocess, sys, time, wave
 from pathlib import Path

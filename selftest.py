@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Self-test for Node-Router. Writes everything to selftest.log."""
 from __future__ import annotations
 

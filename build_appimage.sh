@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 #
 # Builds Node-Router-<version>-x86_64.AppImage – a single executable file
 # with Python, PySide6, Qt and the effect plugins. PipeWire tools (pw-dump,

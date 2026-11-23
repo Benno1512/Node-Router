@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Effect blocks as PipeWire filter-chain.
 
 Every block runs as its own `pipewire -c <conf>` process (detached from the

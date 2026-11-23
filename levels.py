@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Level meters for the cards.
 
 Each metered node gets its own small recorder: `pw-record` writing raw 32-bit float

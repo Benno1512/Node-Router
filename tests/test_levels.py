@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Level meters: test tone (not connected to any speaker), silent stream, test mic.
 Meters follow the signal, stop when hidden/disabled, recorders never show as cards.
 Temp config, test objects only, silent."""

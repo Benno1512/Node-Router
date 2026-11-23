@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Background operation: tray, autostart toggle, single instance, restart of the
 PipeWire monitor, re-creating virtual mics after they are lost.
 Simulates a PipeWire restart (ending the monitor process, unloading the mic module),

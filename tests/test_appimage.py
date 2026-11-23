@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Starts the built AppImage like a user would (with a test config in temp folders) and
 checks that it works with PipeWire from the single file: virtual mic
 (pactl), effect process (pipewire -c), storage locations, icon, single instance.

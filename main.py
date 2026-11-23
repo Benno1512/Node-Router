@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Node-Router – Node-RED-style PipeWire patchbay.
 
 Left:  input devices + application audio streams
@@ -40,7 +40,7 @@ import pw_backend as pw
 CONFIG = paths.CONFIG
 __version__ = "0.1.5"
 APP_ID = "node-router"
-REPO_URL = "https://github.com/benborofn-lgtm/Node-Router"
+REPO_URL = "https://github.com/Benno1512/Node-Router"
 ICON = paths.RES / "icon.svg"
 MAIN = Path(__file__).resolve()
 

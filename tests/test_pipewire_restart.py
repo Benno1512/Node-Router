@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """REAL restart of PipeWire (pipewire, pipewire-pulse, wireplumber).
 
 Not part of run_all.py: briefly interrupts the sound of all programs, and virtual

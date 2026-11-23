@@ -4,11 +4,11 @@ Thanks for wanting to help! Bug reports, test reports from other setups and pull
 welcome.
 
 Questions, ideas and setups you want to share go to
-[Discussions](https://github.com/benborofn-lgtm/Node-Router/discussions).
+[Discussions](https://github.com/Benno1512/Node-Router/discussions).
 
 ## Reporting a problem
 
-Please open an [issue](https://github.com/benborofn-lgtm/Node-Router/issues) and include:
+Please open an [issue](https://github.com/Benno1512/Node-Router/issues) and include:
 
 - your distribution and version, plus the output of `pipewire --version` and `wireplumber --version`
 - whether you use the AppImage or run from source
@@ -21,7 +21,7 @@ on another distribution or with WirePlumber 0.5 is very useful, even if everythi
 
 ## Development setup
 
-    git clone https://github.com/benborofn-lgtm/Node-Router.git
+    git clone https://github.com/Benno1512/Node-Router.git
     cd Node-Router
     ./install.sh
     .venv/bin/python main.py

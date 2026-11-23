@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """Check system requirements and name the matching install command.
 
 Bundled are Python/Qt (AppImage) and the effect plugins (plugins/). PipeWire,

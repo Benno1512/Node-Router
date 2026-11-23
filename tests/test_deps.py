@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 """System check (deps.py), notice dialog at start, bundled plugins incl. the
 libatomic fallback for RNNoise (real effect process, test IDs only)."""
 import ctypes.util, json, os, subprocess, sys, tempfile, time

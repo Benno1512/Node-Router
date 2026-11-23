@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Copyright (C) 2026 Benno1512 – Node-Router
 #
 # Installs everything Node-Router needs from the system (PipeWire,
 # pipewire-pulse, WirePlumber, pactl, Qt helper library) and enables the
