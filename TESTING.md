@@ -2,7 +2,8 @@
 
 The automated tests (`tests/run_all.py`) work with test tones and noise and measure levels.
 Whether it sounds good in Discord with real speech is something only a person can judge.
-This checklist takes about 15 minutes.
+This checklist takes about 15 minutes. It has been run on Ubuntu 24.04 (PipeWire 1.0.5,
+WirePlumber 0.4.17); running it on another setup is the most useful test you can contribute.
 
 Ideally test with a second person in a voice channel. Alternatively, use Discord's **mic test**
 (Settings → Voice & Video → "Let's Check").

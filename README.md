@@ -182,8 +182,9 @@ block. This only works while the router is running.
 ## Known limitations
 
 - Only tested on **Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17**. Newer versions
-  are untested, especially WirePlumber 0.5, which is configured differently.
-- Not yet tested **with Discord and real speech**. See the checklist in [TESTING.md](TESTING.md).
+  are untested, especially WirePlumber 0.5, which is configured differently. Reports from other
+  distributions and versions are very welcome: please open an issue, ideally after running
+  the checklist in [TESTING.md](TESTING.md).
 - These only work while the router is running (use the tray or autostart):
   - restoring routes
   - blocked routes
@@ -195,6 +196,7 @@ block. This only works while the router is running.
 ## License
 
 GPL-3.0-or-later, see [LICENSE](LICENSE). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 The bundled plugins come from other projects and keep their own licenses:
 - [LSP Plugins](https://lsp-plug.in/), LGPL-3.0
 - [RNNoise](https://github.com/werman/noise-suppression-for-voice), GPL-3.0

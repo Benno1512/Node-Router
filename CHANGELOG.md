@@ -3,11 +3,16 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.5] – 2026-11-23
 
 ### Added
 - **Level meters** on every card (signal peak, -60 … 0 dBFS, yellow/red near clipping).
   They run only while the window is open, so microphones are not kept in use from the tray.
+- `CONTRIBUTING.md`
+
+### Changed
+- Checked with Discord and real speech (checklist in `TESTING.md`), so this is the first
+  regular release (no longer a pre-release)
 
 ## [0.1.4] – 2026-11-23
 
@@ -96,7 +101,7 @@ First version.
 - Only tested on Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17
 - Not yet tested with Discord and real speech (see `TESTING.md`)
 
-[Unreleased]: https://github.com/benborofn-lgtm/Node-Router/compare/v0.1.4...HEAD
+[0.1.5]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.5
 [0.1.4]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.4
 [0.1.3]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.3
 [0.1.2]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.2
