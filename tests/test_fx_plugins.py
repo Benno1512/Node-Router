@@ -135,7 +135,8 @@ pn.kill(); pn.wait(); wait(1200)
 ok("prio app gone: dashed at the prio input", any(x.planned and x.dst is dk and x.group == "prio" for x in v.wires))
 pn = player(NOISE, noise_f); wait(3000)
 g = pw.read_graph()
-chans = {g.in_channel(l) for l in g.links if g.nodes.get(l.out_node) and g.nodes[l.out_node].app_name == NOISE}
+chans = {g.in_channel(l) for l in g.links if g.nodes.get(l.out_node) and g.nodes[l.out_node].app_name == NOISE
+         and g.nodes.get(l.in_node) and g.nodes[l.in_node].is_effect}       # not the level meter
 ok("prio app back: route on RL/RR again", chans == {"RL", "RR"}, chans)
 
 ids = [it.fx["id"] for it in v.fx_items.values()]

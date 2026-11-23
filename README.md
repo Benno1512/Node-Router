@@ -87,6 +87,10 @@ brings up the existing window.
   - the speaker icon mutes
 
   It affects the whole device or app, like pavucontrol does, not single connections.
+- Below the slider, a **level meter** shows the signal peak (-60 … 0 dBFS). It turns
+  yellow above -6 dBFS and red above -1 dBFS or when the signal clips. For output devices it
+  shows what is being played on them. Meters only run while the window is open: a meter on a
+  microphone keeps that microphone in use, so they stop when the window goes to the tray.
 - **● Active / ○ Disabled** (top) turns the router off without closing it:
   - your own connections are removed and effects are stopped
   - blocked app → default speaker connections are restored
@@ -168,6 +172,7 @@ block. This only works while the router is running.
 | `test_ghost` | greyed-out cards, dashed routes, restoring |
 | `test_blocked` | blocked routes against WirePlumber reconnecting |
 | `test_power` | on/off button |
+| `test_levels` | level meters: signal level, silence, hidden window, disabled router, leftovers |
 | `test_background` | tray, autostart toggle, single instance, monitor restart, lost virtual mics |
 | `test_deps` | system check, missing-dependency dialog, bundled plugins, libatomic fallback |
 | `test_fx` | high-pass/EQ/delay/reverb: signal, sliders, moving, restart, removing |

@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from string import Template
 
-from PySide6.QtCore import QPointF, QProcess, QRectF, Qt, QTimer
+from PySide6.QtCore import QEvent, QPointF, QProcess, QRectF, Qt, QTimer
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QFont, QIcon,
                            QGuiApplication, QPainter, QPainterPath, QPen)
@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsItem,
 
 import deps
 import fx as fxlib
+import levels
 import paths
 import pw_backend as pw
 
@@ -432,6 +433,9 @@ class VolumeItem(QGraphicsItem):
         self.setCursor(Qt.PointingHandCursor)
         self.setAcceptHoverEvents(True)
         self._hover = False
+        self.meter_on = False           # level meter running for this card
+        self.meter = 0.0                # 0..1 on a dB scale (-60 … 0 dBFS)
+        self.clip = False
         self.setToolTip("Volume · mouse wheel: ±5 % · double-click: 100 %")
 
     # geometry
@@ -454,6 +458,11 @@ class VolumeItem(QGraphicsItem):
         if abs(v - 1.0) < 0.03:        # snap slightly to 100 %
             v = 1.0
         return min(max(v, 0.0), pw.MAX_VOLUME)
+
+    def set_level(self, level: float, clip: bool, on: bool) -> None:
+        if (level, clip, on) != (self.meter, self.clip, self.meter_on):
+            self.meter, self.clip, self.meter_on = level, clip, on
+            self.update()
 
     # state from PipeWire
     def sync_from_node(self):
@@ -498,6 +507,24 @@ class VolumeItem(QGraphicsItem):
         kx = self._x_for(self.value)
         fill = COL["muted"] if self.muted else c
         p.setBrush(fill); p.drawRoundedRect(QRectF(a, cy - 2, kx - a, 4), 2, 2)
+        # level meter: thin bar below the track (signal peak, -60 … 0 dBFS)
+        if self.meter_on:
+            # LED-style segments: card color, yellow above -6 dBFS, red above -1 dBFS
+            # (all lit segments red after clipping)
+            my, seg, gap = cy + 6, 3.0, 1.5
+            n = int((b - a + gap) // (seg + gap))
+            for k in range(n):
+                pos = (k + 1) / n
+                lit = pos <= self.meter + 1e-9
+                if not lit:
+                    col = COL["track"]
+                elif self.clip or pos > 0.983:
+                    col = COL["err"]
+                elif pos > 0.9:
+                    col = COL["sel"]
+                else:
+                    col = c
+                p.fillRect(QRectF(a + k * (seg + gap), my, seg, 3), col)
         # 100 % mark
         tx = self._x_for(1.0)
         p.setPen(QPen(COL["tick"], 1))
@@ -1522,6 +1549,8 @@ class MainWindow(QMainWindow):
             except RuntimeError as e:
                 self.error(str(e))
 
+        levels.kill_stale()                      # recorders of a crashed earlier instance
+        self.meters = levels.LevelMeters(self._on_level, self)
         self.proc = QProcess(self)
         self.proc.finished.connect(self._dump_done)
         self._pending = False
@@ -1657,6 +1686,35 @@ class MainWindow(QMainWindow):
         if relevant:
             self.debounce.start()
 
+    # ---------------- level meters
+    def _sync_meters(self):
+        """Meters only while the window can be seen and the router is active
+        (a meter on a microphone keeps that microphone open)."""
+        if self._shutting:
+            return
+        self.meters.enabled = (self.isVisible() and not self.isMinimized()
+                               and not self.cfg.disabled)
+        wanted = [it.node for it in self.view.node_items.values() if not it.ghost]
+        self.meters.sync(self.graph, wanted)
+
+    def _on_level(self, nid: int, level: float, clip: bool):
+        it = self.view.node_items.get(nid)
+        if it is not None and not it.ghost:
+            it.vol.set_level(level, clip, nid in self.meters.meters)
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        QTimer.singleShot(0, self._sync_meters)
+
+    def hideEvent(self, e):
+        super().hideEvent(e)
+        QTimer.singleShot(0, self._sync_meters)
+
+    def changeEvent(self, e):
+        super().changeEvent(e)
+        if e.type() == QEvent.WindowStateChange:
+            QTimer.singleShot(0, self._sync_meters)
+
     def closeEvent(self, e):
         if self.tray is not None and not self._quitting:
             # closing the window = background; routes keep being maintained
@@ -1672,6 +1730,7 @@ class MainWindow(QMainWindow):
             self.tray.hide()
         # do nothing anymore once the window is closed (effect processes keep running)
         self._shutting = True
+        self.meters.stop_all()
         self.timer.stop(); self.debounce.stop()
         self.proc.finished.disconnect(self._dump_done)
         self.mon.kill(); self.mon.waitForFinished(1000)
@@ -1727,6 +1786,7 @@ class MainWindow(QMainWindow):
         if sig != self._sig:
             self._sig = sig
             self.view.sync(g, self.cfg)
+        self._sync_meters()
 
     def _nodes_by_key(self) -> dict[str, list[pw.Node]]:
         by_key: dict[str, list[pw.Node]] = {}

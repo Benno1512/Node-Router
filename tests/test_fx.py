@@ -66,7 +66,8 @@ for title, (x, y) in spots.items():
                                            Qt.LeftButton, Qt.LeftButton, Qt.NoModifier)); wait(200)
 m.QMenu = orig_menu
 ok("double-click menu lists the 4 blocks", picked and all(t in picked[0] for t in spots), picked[:1])
-ok("4 blocks created", len(w.cfg.effects) == 4 and len(v.fx_items) == 4)
+ok("4 blocks created", until(lambda: len(w.cfg.effects) == 4 and len(v.fx_items) == 4, 3000),
+   (len(w.cfg.effects), len(v.fx_items)))
 ok("all processes running (cards active)", until(lambda: all(i.running for i in v.fx_items.values()), 8000),
    [(i.spec["title"], i.running) for i in v.fx_items.values()])
 fx = {i.spec["title"]: i for i in v.fx_items.values()}

@@ -36,6 +36,7 @@ TESTS = [  # order: fast/basic first
     ("ghost", HERE / "test_ghost.py", 150),
     ("blocked", HERE / "test_blocked.py", 150),
     ("power", HERE / "test_power.py", 200),
+    ("levels", HERE / "test_levels.py", 90),
     ("background", HERE / "test_background.py", 120),
     ("fx", HERE / "test_fx.py", 300),
     ("fx_plugins", HERE / "test_fx_plugins.py", 300),
@@ -61,7 +62,8 @@ def router_running() -> list[int]:
 
 def cleanup() -> list[str]:
     """Remove test leftovers after aborted runs. Only touches test objects:
-    modules diy_selftest_*, test streams diy_selftest_*, effect processes whose
+    modules diy_selftest_*, test streams diy_selftest_*, level meter recorders
+    diy_meter_*, effect processes whose
     ID is not in the user's config.json."""
     done = []
     r = subprocess.run(["pactl", "list", "short", "modules"], capture_output=True, text=True)
@@ -77,7 +79,9 @@ def cleanup() -> list[str]:
             cmd = (p / "cmdline").read_bytes()
         except OSError:
             continue
-        if cmd.split(b"\0")[0].endswith((b"pw-play", b"pacat")) and b"diy_selftest_" in cmd:
+        argv0 = cmd.split(b"\0")[0]
+        if (argv0.endswith((b"pw-play", b"pacat")) and b"diy_selftest_" in cmd) or \
+                (argv0.endswith(b"pw-record") and b"diy_meter_" in cmd):
             subprocess.run(["kill", p.name], capture_output=True)
             done.append(f"test stream {p.name}")
     sys.path.insert(0, str(NR))
