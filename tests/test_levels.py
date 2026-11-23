@@ -34,6 +34,25 @@ def rec_procs():
     out = subprocess.run(["pgrep", "-af", "pw-record"], capture_output=True, text=True).stdout
     return [l for l in out.splitlines() if levels.PREFIX in l]
 
+# --- data format: raw little-endian f32, or a Sun AU stream (big-endian) from newer pw-record
+import struct  # noqa: E402
+def fed(chunks):
+    mt = levels.Meter.__new__(levels.Meter)
+    mt._rest, mt._header, mt._swap, mt.clip_until = b"", None, False, 0.0
+    for c in chunks:
+        mt._feed(c)
+    return mt.target
+samples = [0.0, 0.3, -0.3, 0.1] * 50
+expect = levels.to_meter(0.3)
+raw = struct.pack(f"<{len(samples)}f", *samples)
+au = b".snd" + struct.pack(">IIIII", 24, 0xFFFFFFFF, 6, 8000, 2) + struct.pack(f">{len(samples)}f", *samples)
+ok("raw f32 data: correct level", abs(fed([raw]) - expect) < 1e-6, fed([raw]))
+ok("AU stream (big-endian): header skipped, correct level", abs(fed([au]) - expect) < 1e-6, fed([au]))
+ok("AU stream in odd-sized pieces", abs(fed([au[i:i + 7] for i in range(0, len(au), 7)]) - expect) < 1e-6)
+ok("pw-record --raw used when available",
+   ("--raw" in subprocess.run(["pw-record", "--help"], capture_output=True, text=True).stdout)
+   == (levels.raw_args() == ["--raw"]), levels.raw_args())
+
 pw.create_virtual_mic("Selftest Level", MIC)
 tone = subprocess.Popen(["pw-play", "--target", "0", "-P",
                          f'{{ node.name = "{TONE}", node.autoconnect = false, application.name = "{TONE}" }}',

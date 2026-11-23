@@ -39,8 +39,8 @@ Depending on the system, the script runs the following. Log out and back in once
 | openSUSE | `sudo zypper install pipewire pipewire-pulseaudio pipewire-tools wireplumber pulseaudio-utils libsndfile1 libxcb-cursor0` |
 | all | `systemctl --user enable --now pipewire pipewire-pulse wireplumber` |
 
-Only Ubuntu 24.04 has been tested. The other package names come from the distributions'
-official repositories. The AppImage also needs glibc ≥ 2.39 (Ubuntu 24.04, Fedora 40 or newer).
+Tested on Ubuntu 24.04 (real hardware) and Fedora 45 (automated tests with virtual devices, see
+[Tests](#tests)). The other package names come from the distributions' official repositories. The AppImage also needs glibc ≥ 2.39 (Ubuntu 24.04, Fedora 40 or newer).
 
 ## Installing from source
 
@@ -160,6 +160,10 @@ block. This only works while the router is running.
 - `tests/test_pipewire_restart.py --yes-really` **really** restarts PipeWire, which briefly
   interrupts the sound of every program. It checks that the mic, effect, routes and sound come back.
   It is not part of `run_all.py`; run it by hand only.
+- `tests/container/run.sh` runs the suite against the **current Fedora** (newest PipeWire and
+  WirePlumber 0.5) in a rootless podman container. It uses virtual devices only, and your own
+  sound system is not touched. The tray and AppImage tests are skipped there. Needs
+  `podman` (`sudo apt install podman`); the first run downloads about 1 GB.
 
 | Test | Checks |
 |---|---|
@@ -181,10 +185,11 @@ block. This only works while the router is running.
 
 ## Known limitations
 
-- Only tested on **Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17**. Newer versions
-  are untested, especially WirePlumber 0.5, which is configured differently. Reports from other
-  distributions and versions are very welcome: please open an issue, ideally after running
-  the checklist in [TESTING.md](TESTING.md).
+- Used daily on **Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17)**. The automated tests also
+  pass on **Fedora 45 (PipeWire 1.6.11, WirePlumber 0.5.19)**, but only with virtual devices in a
+  container: real hardware, the tray and Discord have not been tried there. Reports from other
+  distributions are very welcome. Please open an issue, ideally after running the checklist in
+  [TESTING.md](TESTING.md).
 - These only work while the router is running (use the tray or autostart):
   - restoring routes
   - blocked routes

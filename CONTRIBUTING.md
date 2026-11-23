@@ -15,9 +15,10 @@ Please open an [issue](https://github.com/Benno1512/Node-Router/issues) and incl
 - what was connected and what you expected or heard instead
 - the terminal output, if you started Node-Router from a terminal
 
-**Testing on other systems helps a lot.** Node-Router is only tested on Ubuntu 24.04 with
-PipeWire 1.0.5 and WirePlumber 0.4.17. A run through the checklist in [TESTING.md](TESTING.md)
-on another distribution or with WirePlumber 0.5 is very useful, even if everything works.
+**Testing on other systems helps a lot.** Node-Router is used on Ubuntu 24.04 (PipeWire 1.0.5,
+WirePlumber 0.4.17); the automated tests also run on Fedora 45 (PipeWire 1.6, WirePlumber 0.5) in
+a container, but without real hardware. A run through the checklist in [TESTING.md](TESTING.md)
+on another distribution with real devices is very useful, even if everything works.
 
 ## Development setup
 
@@ -44,6 +45,9 @@ The code is plain Python with PySide6, with no build step:
 - **Close Node-Router first.** Otherwise the runner aborts.
 - The tests open real windows and create real PipeWire objects (named `diy_selftest_*`). They use
   their own config in a temp folder, play nothing through your speakers and clean up afterwards.
+- `tests/container/run.sh` runs the same suite against the newest Fedora (PipeWire/WirePlumber 0.5)
+  in a rootless podman container with virtual devices. It is a quick way to check a change on a
+  newer PipeWire than your own.
 - Please add or extend a test for new behavior, and run the whole suite before opening a pull
   request.
 

@@ -1,0 +1,15 @@
+# Test environment with a current PipeWire + WirePlumber (Fedora), no real audio hardware.
+#   tests/container/run.sh            builds this image and runs the test suite in it
+FROM registry.fedoraproject.org/fedora:latest
+
+RUN dnf -y install --setopt=install_weak_deps=False \
+        pipewire pipewire-pulseaudio pipewire-utils wireplumber pulseaudio-utils \
+        dbus-daemon python3 procps-ng binutils libatomic libsndfile \
+        mesa-libEGL mesa-libGL libxkbcommon fontconfig glib2 dbus-libs \
+        google-noto-sans-fonts \
+    && dnf clean all
+
+# Node-Router only uses QtCore/Gui/Widgets/Network/Test (+ the SVG icon plugin), all
+# in PySide6-Essentials – no need for the large add-ons (WebEngine …)
+RUN python3 -m venv /venv \
+    && /venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 "PySide6-Essentials>=6.5,<7"

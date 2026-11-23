@@ -13,6 +13,9 @@ from PySide6.QtWidgets import QApplication, QMenu
 import main as m, pw_backend as pw, fx as fxlib
 
 m.CONFIG = OUT / "fx_config.json"; m.CONFIG.unlink(missing_ok=True)
+def system_filter_chain() -> bool:     # e.g. Ubuntu runs one as a user service; not every system does
+    return subprocess.run(["pgrep", "-f", "pipewire -c filter-chain.conf"], capture_output=True).returncode == 0
+had_system_fc = system_filter_chain()
 app = QApplication([]); fails = 0
 MIC, TONE = "diy_selftest_fxmic", "diy_selftest_tone"
 def ok(n, c, i=""):
@@ -142,7 +145,7 @@ wait(800)
 own = [p for p in fxlib.FX_DIR.glob("*") if p.name.split(".")[0].split("_")[0] in pids]   # only our own blocks
 ok("remove: cards, files, routes gone", not v.fx_items and not own and
    not [r for r in w.cfg.routes if any(k.startswith("fx:") for k in r)], (own, w.cfg.routes))
-ok("system filter-chain untouched", subprocess.run(["pgrep", "-f", "pipewire -c filter-chain.conf"], capture_output=True).returncode == 0)
+ok("system filter-chain untouched", system_filter_chain() == had_system_fc, had_system_fc)
 w.close(); tone.terminate(); tone.wait()
 pw.remove_virtual_mic(MIC); m.CONFIG.unlink(missing_ok=True)
 finish(fails)

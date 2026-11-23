@@ -32,6 +32,23 @@ CLIP = 0.989                 # ≈ -0.1 dBFS
 CLIP_HOLD_S = 1.0
 
 
+_raw_args: list[str] | None = None
+
+
+def raw_args() -> list[str]:
+    """Newer pw-record (seen in PipeWire 1.6) writes a Sun AU file to stdout unless
+    --raw is given; older ones (1.0) have no such option and always write raw."""
+    global _raw_args
+    if _raw_args is None:
+        try:
+            out = subprocess.run(["pw-record", "--help"], capture_output=True, text=True,
+                                 timeout=5).stdout
+        except (OSError, subprocess.SubprocessError):
+            out = ""
+        _raw_args = ["--raw"] if "--raw" in out else []
+    return _raw_args
+
+
 def to_meter(peak: float) -> float:
     """Linear peak -> 0..1 on a dB scale."""
     if peak <= 1e-6:
@@ -88,6 +105,8 @@ class Meter:
         self.started = time.monotonic()
         self.shown_clip = False
         self._rest = b""
+        self._header: bool | None = None  # None: not checked yet
+        self._swap = False               # AU data is big-endian
         self.proc = QProcess(parent)
         self.proc.setProcessChannelMode(QProcess.SeparateChannels)
         self.proc.setStandardErrorFile(QProcess.nullDevice())
@@ -95,17 +114,37 @@ class Meter:
         props = (f'{{ node.name = "{self.name}", node.description = "Node-Router level meter", '
                  f'media.name = "Node-Router level meter", application.name = "Node-Router", '
                  f'node.autoconnect = false, node.dont-reconnect = true }}')
-        self.proc.start("pw-record", ["--target", "0", "--rate", str(RATE), "--channels", "2",
-                                      "--format", "f32", "--latency", "40ms", "-P", props, "-"])
+        self.proc.start("pw-record", raw_args() + [
+            "--target", "0", "--rate", str(RATE), "--channels", "2",
+            "--format", "f32", "--latency", "40ms", "-P", props, "-"])
 
     def _read(self):
-        data = self._rest + bytes(self.proc.readAllStandardOutput())
+        self._feed(bytes(self.proc.readAllStandardOutput()))
+
+    def _feed(self, chunk: bytes) -> None:
+        data = self._rest + chunk
+        if self._header is None:
+            # fallback if --raw is not available but a Sun AU header arrives anyway:
+            # ".snd", header size (BE u32), …, encoding 6 = 32-bit float, big-endian
+            if len(data) < 24:
+                self._rest = data
+                return
+            self._header = data[:4] == b".snd"
+            if self._header:
+                size = int.from_bytes(data[4:8], "big")
+                if len(data) < size:
+                    self._rest, self._header = data, None
+                    return
+                self._swap = True
+                data = data[size:]
         cut = len(data) - len(data) % 4
         self._rest = data[cut:]
         if not cut:
             return
         a = array.array("f")
         a.frombytes(data[:cut])
+        if self._swap:
+            a.byteswap()
         peak = max(max(a), -min(a))
         self.target = to_meter(peak)
         self.last_data = time.monotonic()
