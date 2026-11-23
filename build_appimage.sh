@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 #
-# Baut DIY-Audio-Router-<version>-x86_64.AppImage – eine einzelne startbare Datei
+# Baut Node-Router-<version>-x86_64.AppImage – eine einzelne startbare Datei
 # mit Python, PySide6 und Qt. PipeWire-Werkzeuge (pw-dump, pw-link, pactl,
 # pipewire) kommen weiterhin vom System.
 #
-#   ./build_appimage.sh            Ergebnis: build/DIY-Audio-Router-<version>-x86_64.AppImage
+#   ./build_appimage.sh            Ergebnis: build/Node-Router-<version>-x86_64.AppImage
 #
 # Lädt beim ersten Lauf: PySide6 + PyInstaller (PyPI) in build/venv und
 # appimagetool (github.com/AppImage/appimagetool) nach build/tools.
@@ -16,9 +16,9 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 B="$DIR/build"
-APP=diy-audio-router
+APP=node-router
 VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' "$DIR/main.py")"
-OUT="$B/DIY-Audio-Router-$VERSION-x86_64.AppImage"
+OUT="$B/Node-Router-$VERSION-x86_64.AppImage"
 TOOL_URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
 mkdir -p "$B/tools"
 
@@ -44,13 +44,13 @@ cp -a "$B/dist/$APP/." "$B/AppDir/usr/bin/"
 cat > "$B/AppDir/AppRun" <<'EOF'
 #!/bin/sh
 HERE="$(dirname "$(readlink -f "$0")")"
-exec "$HERE/usr/bin/diy-audio-router" "$@"
+exec "$HERE/usr/bin/node-router" "$@"
 EOF
 chmod +x "$B/AppDir/AppRun"
 cat > "$B/AppDir/$APP.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=DIY Audio Router
+Name=Node-Router
 Comment=PipeWire-Patchbay mit virtuellen Mikrofonen und Effekten
 Exec=$APP
 Icon=$APP

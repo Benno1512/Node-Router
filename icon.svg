@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- DIY Audio Router: zwei Quellen links, ein Ziel rechts, verbunden über Kurven -->
+  <!-- Node-Router: zwei Quellen links, ein Ziel rechts, verbunden über Kurven -->
   <rect x="2" y="2" width="60" height="60" rx="14" fill="#1e1f24"/>
   <path d="M16 20 C 32 20, 32 32, 48 32" fill="none" stroke="#5b9bd5" stroke-width="4" stroke-linecap="round"/>
   <path d="M16 44 C 32 44, 32 32, 48 32" fill="none" stroke="#4caf82" stroke-width="4" stroke-linecap="round"/>

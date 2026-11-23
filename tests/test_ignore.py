@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Ignore list: test app hidden, stays hidden when it plays again, persistent, undo via menu."""
 import json, subprocess, sys, time
 from pathlib import Path

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 #
-# Installiert alles, was der DIY Audio Router vom System braucht (PipeWire,
+# Installiert alles, was der Node-Router vom System braucht (PipeWire,
 # pipewire-pulse, WirePlumber, pactl, Qt-Hilfsbibliothek) und schaltet den
 # Sound-Server ein. Erkennt Ubuntu/Debian/Mint, Fedora, Arch/Manjaro, openSUSE.
 # Python, Qt und die Effekt-Plugins sind bereits im AppImage bzw. Repository.
@@ -74,4 +74,4 @@ for t in pipewire pw-dump pw-link pw-cli wpctl pactl; do
 done
 if pactl info 2>/dev/null | grep -q PipeWire; then echo "  ✓ Sound-Server ist PipeWire"
 else echo "  ! Sound-Server ist noch nicht PipeWire – bitte ab- und wieder anmelden"; ok=0; fi
-[ "$ok" = 1 ] && echo "Alles bereit. Jetzt den DIY Audio Router starten." || true
+[ "$ok" = 1 ] && echo "Alles bereit. Jetzt den Node-Router starten." || true

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """ECHTER Neustart von PipeWire (pipewire, pipewire-pulse, wireplumber).
 
 Nicht Teil von run_all.py: unterbricht den Ton aller Programme kurz, und virtuelle

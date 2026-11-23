@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Speicherorte und Start-Umgebung – Quellcode-Betrieb vs. gebündelte App.
 
 Aus dem Quellcode (python main.py) bleibt alles neben dem Programm:
     config.json, fx/, plugins/ in node_router/
 Als gebündelte App (AppImage/PyInstaller) ist der Programmordner schreibgeschützt
 bzw. temporär, daher:
-    ~/.config/diy-audio-router/config.json
-    ~/.local/share/diy-audio-router/{fx,plugins,icon.svg}
+    ~/.config/node-router/config.json
+    ~/.local/share/node-router/{fx,plugins,icon.svg}
 """
 from __future__ import annotations
 
@@ -19,7 +19,8 @@ from pathlib import Path
 FROZEN = bool(getattr(sys, "frozen", False))
 SRC = Path(__file__).resolve().parent                        # Programmdateien
 RES = Path(getattr(sys, "_MEIPASS", SRC))                    # mitgelieferte Daten (icon.svg)
-APP_ID = "diy-audio-router"
+APP_ID = "node-router"
+LEGACY_ID = "diy-audio-router"          # Name bis 0.1.2 („DIY Audio Router“)
 
 
 def _xdg(var: str, default: str) -> Path:
@@ -34,6 +35,20 @@ def data_dir() -> Path:
     return _xdg("XDG_DATA_HOME", ".local/share") / APP_ID if FROZEN else SRC
 
 
+def _migrate_legacy_dirs() -> None:
+    """Gebündelt: Ordner aus der Zeit vor der Umbenennung übernehmen."""
+    if not FROZEN:
+        return
+    for var, default in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share")):
+        old, new = _xdg(var, default) / LEGACY_ID, _xdg(var, default) / APP_ID
+        if old.is_dir() and not new.exists():
+            try:
+                old.rename(new)
+            except OSError:
+                pass
+
+
+_migrate_legacy_dirs()
 CONFIG = Path(os.environ.get("DIY_ROUTER_CONFIG") or config_dir() / "config.json")
 FX_DIR = data_dir() / "fx"
 PLUGIN_DIR = data_dir() / "plugins"          # vom Nutzer abgelegte Plugins

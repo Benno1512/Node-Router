@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
-"""DIY Audio Router – Node-RED-style PipeWire patchbay.
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
+"""Node-Router – Node-RED-style PipeWire patchbay.
 
 Left:  input devices + application audio streams
 Right: real output devices + virtual microphones created by this program
@@ -37,8 +37,8 @@ import pw_backend as pw
 
 # DIY_ROUTER_CONFIG=<Datei> nutzt eine andere Config (z. B. für Tests oder ein zweites Profil)
 CONFIG = paths.CONFIG
-__version__ = "0.1.2"
-APP_ID = "diy-audio-router"
+__version__ = "0.1.3"
+APP_ID = "node-router"
 REPO_URL = "https://github.com/benborofn-lgtm/Audio-Router"
 ICON = paths.RES / "icon.svg"
 MAIN = Path(__file__).resolve()
@@ -49,10 +49,27 @@ def autostart_file() -> Path:
     return Path(base) / "autostart" / f"{APP_ID}.desktop"
 
 
+def migrate_legacy_entries() -> None:
+    """Startmenü-/Autostart-Einträge aus der Zeit vor der Umbenennung
+    (diy-audio-router.desktop) durch neue ersetzen – Autostart bleibt an."""
+    data = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
+    for old, new, minimized in ((autostart_file().with_name(f"{paths.LEGACY_ID}.desktop"), autostart_file(), True),
+                                (data / "applications" / f"{paths.LEGACY_ID}.desktop",
+                                 data / "applications" / f"{APP_ID}.desktop", False)):
+        if old.exists():
+            try:
+                if not new.exists():
+                    new.parent.mkdir(parents=True, exist_ok=True)
+                    new.write_text(desktop_entry(minimized))
+                old.unlink()
+            except OSError:
+                pass
+
+
 def desktop_entry(minimized: bool) -> str:
     """Desktop-Eintrag (Startmenü/Autostart) für genau diese Installation."""
     exe = paths.launch_command(minimized)
-    return ("[Desktop Entry]\nType=Application\nName=DIY Audio Router\n"
+    return ("[Desktop Entry]\nType=Application\nName=Node-Router\n"
             "Comment=PipeWire-Patchbay mit virtuellen Mikrofonen und Effekten\n"
             f"Exec={exe}\nIcon={paths.icon_path()}\nTerminal=false\n"
             "Categories=AudioVideo;Audio;Mixer;\n"
@@ -203,7 +220,7 @@ class Header(QFrame):
 
         texts = QVBoxLayout(); texts.setSpacing(1)
         texts.setContentsMargins(0, 8, 0, 8)
-        self.title = QLabel("DIY Audio Router"); self.title.setObjectName("Title")
+        self.title = QLabel("Node-Router"); self.title.setObjectName("Title")
         self.status = QLabel(); self.status.setObjectName("Status")
         texts.addWidget(self.title); texts.addWidget(self.status)
         lay.addLayout(texts)
@@ -245,7 +262,7 @@ class Header(QFrame):
         self.autostart_action.toggled.connect(win.set_autostart)
         menu.addAction("Config-Ordner öffnen", win.open_config_dir)
         menu.addSeparator()
-        menu.addAction("Über DIY Audio Router", win.show_about)
+        menu.addAction("Über Node-Router", win.show_about)
         more.setMenu(menu)
         add = QToolButton(text="＋  Virtuelles Mikrofon")
         add.setObjectName("Primary"); add.setCursor(Qt.PointingHandCursor)
@@ -1469,7 +1486,7 @@ class RouterView(QGraphicsView):
 class MainWindow(QMainWindow):
     def __init__(self, tray: bool = False, check_system: bool = False):
         super().__init__()
-        self.setWindowTitle("DIY Audio Router")
+        self.setWindowTitle("Node-Router")
         self.setWindowIcon(QIcon(str(ICON)))
         self._quitting = False                   # True: wirklich beenden (nicht nur ins Tray)
         self._shutting = False                   # Monitor nicht mehr neu starten
@@ -1530,7 +1547,7 @@ class MainWindow(QMainWindow):
     def check_system(self) -> list[str]:
         probs = deps.problems()
         if probs:
-            box = QMessageBox(QMessageBox.Warning, "DIY Audio Router – es fehlt etwas",
+            box = QMessageBox(QMessageBox.Warning, "Node-Router – es fehlt etwas",
                               deps.help_text(probs), parent=self)
             cmd = deps.install_command()
             if cmd:
@@ -1548,7 +1565,7 @@ class MainWindow(QMainWindow):
     # ---------------- Hintergrundbetrieb
     def _make_tray(self) -> QSystemTrayIcon:
         t = QSystemTrayIcon(QIcon(str(ICON)), self)
-        t.setToolTip("DIY Audio Router")
+        t.setToolTip("Node-Router")
         m = QMenu(self)
         m.addAction("Fenster öffnen", self.show_window)
         m.addSeparator()
@@ -1648,7 +1665,7 @@ class MainWindow(QMainWindow):
             self.hide()
             if not self._tray_hint_shown:
                 self._tray_hint_shown = True
-                self.tray.showMessage("DIY Audio Router läuft weiter",
+                self.tray.showMessage("Node-Router läuft weiter",
                                       "Über das Symbol in der Taskleiste öffnen oder beenden.",
                                       QIcon(str(ICON)), 4000)
             return
@@ -2037,8 +2054,8 @@ class MainWindow(QMainWindow):
 
     def show_about(self):
         QMessageBox.about(
-            self, "Über DIY Audio Router",
-            f"<b>DIY Audio Router</b> {__version__}<br><br>"
+            self, "Über Node-Router",
+            f"<b>Node-Router</b> {__version__}<br><br>"
             "PipeWire-Patchbay mit virtuellen Mikrofonen und Effekt-Bausteinen.<br><br>"
             f'<a href="{REPO_URL}">{REPO_URL}</a><br><br>'
             "Lizenz: GPL-3.0-or-later – ohne jede Gewährleistung.<br>"
@@ -2051,20 +2068,21 @@ class MainWindow(QMainWindow):
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(CONFIG.parent)))
 
     def error(self, msg: str):
-        QMessageBox.warning(self, "DIY Audio Router", msg)
+        QMessageBox.warning(self, "Node-Router", msg)
 
 
 def main() -> int:
     if "--version" in sys.argv[1:]:
-        print(f"DIY Audio Router {__version__}")
+        print(f"Node-Router {__version__}")
         return 0
     paths.clean_host_env()                        # Kindprozesse: System-Umgebung
     CONFIG.parent.mkdir(parents=True, exist_ok=True)
     paths.icon_path()                             # gebündelt: Icon dauerhaft ablegen (Desktop-Einträge)
     paths.install_bundled_plugins()               # gebündelt: Plugins dauerhaft ablegen (laufende Effekte)
+    migrate_legacy_entries()                      # alte „DIY Audio Router“-Einträge ersetzen
     minimized = "--minimized" in sys.argv[1:]
     app = QApplication(sys.argv)
-    app.setApplicationName("DIY Audio Router")
+    app.setApplicationName("Node-Router")
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(QIcon(str(ICON)))
 
@@ -2076,7 +2094,7 @@ def main() -> int:
     if sock.waitForConnected(500):
         sock.write(b"noop" if minimized else b"show")
         sock.flush(); sock.waitForBytesWritten(500); sock.disconnectFromServer()
-        print("DIY Audio Router läuft bereits.", file=sys.stderr)
+        print("Node-Router läuft bereits.", file=sys.stderr)
         return 0
     QLocalServer.removeServer(name)               # verwaistes Socket nach Absturz
     server = QLocalServer()

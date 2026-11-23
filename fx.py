@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Effekt-Bausteine als PipeWire filter-chain.
 
 Jeder Baustein läuft als eigener `pipewire -c <conf>`-Prozess (losgelöst vom
@@ -267,7 +267,7 @@ def write_conf(fx: dict) -> Path:
     title = TYPES[kind]["title"]
     chans = [ch for g in input_groups(kind) for ch in (g["channels"] or ["FL", "FR"])]
     cap_fmt = f"audio.channels = {len(chans)} audio.position = [ {' '.join(chans)} ]"
-    text = f"""# erzeugt vom DIY Audio Router – wird bei jedem Start neu geschrieben
+    text = f"""# erzeugt vom Node-Router – wird bei jedem Start neu geschrieben
 context.properties = {{ log.level = 0 }}
 context.spa-libs = {{
     audio.convert.* = audioconvert/libspa-audioconvert

@@ -3,6 +3,16 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
 [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.1.3] – 2026-11-23
+
+### Geändert
+- **Neuer Name: Node-Router** (vorher „DIY Audio Router“). Fenster, Tray, Startmenü,
+  AppImage-Datei (`Node-Router-<version>-x86_64.AppImage`), Ordner beim AppImage
+  (`~/.config/node-router`, `~/.local/share/node-router`)
+- Alte Startmenü-/Autostart-Einträge und AppImage-Ordner werden automatisch übernommen
+- Unverändert: interne PipeWire-Namen (`diy_…`) der virtuellen Mikros und Effekte,
+  damit bestehende Einstellungen weiter funktionieren
+
 ## [0.1.2] – 2026-11-23
 
 ### Neu
@@ -64,6 +74,7 @@ Erste Version.
 - Nur getestet mit Ubuntu 24.04, PipeWire 1.0.5, WirePlumber 0.4.17
 - Noch nicht mit Discord und echter Sprache getestet (siehe `TESTING.md`)
 
+[0.1.3]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.3
 [0.1.2]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.2
 [0.1.1]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.1
 [0.1.0]: https://github.com/benborofn-lgtm/Audio-Router/releases/tag/v0.1.0

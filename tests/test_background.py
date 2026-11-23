@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Hintergrundbetrieb: Tray, Autostart-Schalter, Einzelinstanz, Neustart der
 PipeWire-Überwachung, virtuelle Mikros nach Verlust neu anlegen.
 Simuliert einen PipeWire-Neustart (Monitor-Prozess beenden, Mikro-Modul entladen),
@@ -41,8 +41,8 @@ ok("virtuelles Mikro aus Config angelegt", until(vm_present, 4000))
 ok("Tray-Symbol sichtbar", w.tray is not None and w.tray.isVisible())
 w.close(); wait(300)
 ok("Schließen versteckt ins Tray", not w.isVisible() and not w._shutting)
-n0 = len(w.graph.nodes); w.refresh(force=True); wait(800)
-ok("…und arbeitet weiter (liest Graph)", w.proc.state() == QProcess.NotRunning and w.graph.nodes, n0)
+n0 = len(w.graph.nodes); w.graph = m.pw.Graph({}, []); w.refresh(force=True)
+ok("…und arbeitet weiter (liest Graph)", until(lambda: w.proc.state() == QProcess.NotRunning and w.graph.nodes, 3000), n0)
 w.show_window(); wait(200)
 ok("Tray → Fenster öffnen", w.isVisible())
 

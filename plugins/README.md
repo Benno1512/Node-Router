@@ -2,7 +2,7 @@
 
 Damit alle Effekt-Bausteine ohne Zusatzinstallation funktionieren, liegen diese
 LADSPA-Plugins unverändert (als Binärdateien, x86_64) im Repository und im AppImage.
-Sie gehören nicht zum DIY Audio Router und stehen unter ihren eigenen Lizenzen.
+Sie gehören nicht zum Node-Router und stehen unter ihren eigenen Lizenzen.
 
 | Datei | Projekt / Version | Lizenz | Quelle |
 |---|---|---|---|
@@ -19,6 +19,6 @@ SHA-256:
 Laufzeit-Abhängigkeiten, die vom System kommen: `libsndfile` (immer vorhanden, weil
 PipeWire sie selbst nutzt), `libstdc++`, `libc`.
 
-Der Router sucht Plugins in dieser Reihenfolge: `~/.local/share/diy-audio-router/plugins`
+Der Router sucht Plugins in dieser Reihenfolge: `~/.local/share/node-router/plugins`
 (nur AppImage), dieser Ordner, dann die System-Ordner (`/usr/lib/ladspa` …). Eine neuere
 Version lässt sich also einfach im Benutzerordner ablegen.

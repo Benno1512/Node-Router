@@ -1,4 +1,4 @@
-# DIY Audio Router (Node-Editor)
+# Node-Router
 
 PipeWire-Patchbay im Node-RED-Stil: Quellen links, Ziele rechts, dazwischen Verbindungen
 und Effekt-Bausteine. Virtuelle Mikrofone z. B. für Discord.
@@ -6,14 +6,14 @@ und Effekt-Bausteine. Virtuelle Mikrofone z. B. für Discord.
 ## Als einzelne Datei (AppImage)
 
 Unter [Releases](https://github.com/benborofn-lgtm/Audio-Router/releases) die Datei
-`DIY-Audio-Router-<version>-x86_64.AppImage` herunterladen, dann:
+`Node-Router-<version>-x86_64.AppImage` herunterladen, dann:
 
-    chmod +x DIY-Audio-Router-*-x86_64.AppImage     # oder: Rechtsklick → Eigenschaften → Ausführbar
-    ./DIY-Audio-Router-*-x86_64.AppImage
+    chmod +x Node-Router-*-x86_64.AppImage     # oder: Rechtsklick → Eigenschaften → Ausführbar
+    ./Node-Router-*-x86_64.AppImage
 
 Keine Installation, kein Python nötig – Qt und alle Effekt-Plugins (Rauschunterdrückung,
-Kompressor, Ducking) sind enthalten. Einstellungen liegen in `~/.config/diy-audio-router/`,
-Effekt-Dateien in `~/.local/share/diy-audio-router/`.
+Kompressor, Ducking) sind enthalten. Einstellungen liegen in `~/.config/node-router/`,
+Effekt-Dateien in `~/.local/share/node-router/`.
 Selbst bauen: `./build_appimage.sh` (lädt PySide6, PyInstaller und appimagetool).
 
 ## Was du brauchst
@@ -48,7 +48,7 @@ Getestet mit Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
     ./install.sh                         # optional: --autostart
 
 `install.sh` prüft die Systempakete, legt `.venv` an, installiert PySide6 und erstellt einen
-Startmenü-Eintrag „DIY Audio Router“. Kein root nötig. Optional:
+Startmenü-Eintrag „Node-Router“. Kein root nötig. Optional:
 
 - Die Effekt-Plugins liegen bereits in `plugins/` (siehe `plugins/README.md`)
 - `./install.sh --uninstall` entfernt Startmenü- und Autostart-Eintrag

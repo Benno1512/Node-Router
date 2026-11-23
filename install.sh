@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
-# DIY Audio Router – Installation für den aktuellen Benutzer (kein root nötig).
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
+# Node-Router – Installation für den aktuellen Benutzer (kein root nötig).
 #
 #   ./install.sh                  venv + PySide6, Startmenü-Eintrag
 #   ./install.sh --autostart      zusätzlich beim Anmelden (minimiert) starten
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_ID="diy-audio-router"
+APP_ID="node-router"
 VENV="${VENV:-$DIR/.venv}"
 APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 AUTOSTART_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
@@ -33,7 +33,8 @@ warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
 fail() { printf '  \033[31m✗\033[0m %s\n' "$*"; }
 
 if [ "$UNINSTALL" = 1 ]; then
-  rm -f "$APPS_DIR/$APP_ID.desktop" "$AUTOSTART_DIR/$APP_ID.desktop"
+  rm -f "$APPS_DIR/$APP_ID.desktop" "$AUTOSTART_DIR/$APP_ID.desktop" \
+        "$APPS_DIR/diy-audio-router.desktop" "$AUTOSTART_DIR/diy-audio-router.desktop"
   ok "Startmenü- und Autostart-Eintrag entfernt"
   exit 0
 fi
@@ -78,7 +79,7 @@ entry() {   # $1 = 1: minimiert starten
   cat <<EOF
 [Desktop Entry]
 Type=Application
-Name=DIY Audio Router
+Name=Node-Router
 Comment=PipeWire-Patchbay mit virtuellen Mikrofonen und Effekten
 Exec="$VENV/bin/python" "$DIR/main.py"$extra
 Icon=$DIR/icon.svg
@@ -87,6 +88,9 @@ Categories=AudioVideo;Audio;Mixer;
 EOF
 }
 mkdir -p "$APPS_DIR"
+# Einträge aus der Zeit vor der Umbenennung („DIY Audio Router“) entfernen
+if [ -f "$AUTOSTART_DIR/diy-audio-router.desktop" ]; then AUTOSTART=1; fi
+rm -f "$APPS_DIR/diy-audio-router.desktop" "$AUTOSTART_DIR/diy-audio-router.desktop"
 entry 0 > "$APPS_DIR/$APP_ID.desktop"
 ok "Eintrag: $APPS_DIR/$APP_ID.desktop"
 if [ "$AUTOSTART" = 1 ]; then
@@ -96,5 +100,5 @@ if [ "$AUTOSTART" = 1 ]; then
 fi
 command -v update-desktop-database >/dev/null && update-desktop-database "$APPS_DIR" 2>/dev/null || true
 
-echo; echo "Fertig. Start: Startmenü → „DIY Audio Router“ oder"
+echo; echo "Fertig. Start: Startmenü → „Node-Router“ oder"
 echo "  \"$VENV/bin/python\" \"$DIR/main.py\""

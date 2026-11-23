@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Systemvoraussetzungen prüfen und den passenden Installationsbefehl nennen.
 
 Mitgeliefert werden Python/Qt (AppImage) und die Effekt-Plugins (plugins/).
@@ -85,7 +85,7 @@ def problems() -> list[str]:
 
 def help_text(probs: list[str]) -> str:
     cmd = install_command()
-    lines = ["Es fehlt etwas, damit der DIY Audio Router arbeiten kann:", ""]
+    lines = ["Es fehlt etwas, damit der Node-Router arbeiten kann:", ""]
     lines += [f"  • {p}" for p in probs]
     lines += ["", "Im Terminal installieren:" if cmd else
               "Bitte PipeWire, pipewire-pulse, WirePlumber und pactl über die Paketverwaltung installieren.", ""]

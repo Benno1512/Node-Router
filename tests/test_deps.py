@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Systemprüfung (deps.py), Hinweis-Dialog beim Start, mitgelieferte Plugins inkl.
 libatomic-Rückfall für RNNoise (echter Effekt-Prozess, nur Test-IDs)."""
 import ctypes.util, json, os, subprocess, sys, tempfile, time
@@ -67,4 +67,18 @@ e = time.time() + 8
 while time.time() < e and f"diy_fx_{FID}_in" not in names(): time.sleep(0.2)
 ok("…und die Rauschunterdrückung startet damit wirklich", f"diy_fx_{FID}_in" in names())
 fxlib.kill(FID); fxlib.delete_files(FID)
+
+# --- Übergang vom alten Namen: alte Desktop-Einträge werden ersetzt
+tmpx = Path(tempfile.mkdtemp())
+os.environ["XDG_CONFIG_HOME"], os.environ["XDG_DATA_HOME"] = str(tmpx / "c"), str(tmpx / "d")
+(tmpx / "c/autostart").mkdir(parents=True); (tmpx / "d/applications").mkdir(parents=True)
+(tmpx / "c/autostart/diy-audio-router.desktop").write_text("[Desktop Entry]\nName=DIY Audio Router\n")
+(tmpx / "d/applications/diy-audio-router.desktop").write_text("[Desktop Entry]\nName=DIY Audio Router\n")
+m.migrate_legacy_entries()
+na, nm = tmpx / "c/autostart/node-router.desktop", tmpx / "d/applications/node-router.desktop"
+ok("alte Einträge entfernt", not (tmpx / "c/autostart/diy-audio-router.desktop").exists()
+   and not (tmpx / "d/applications/diy-audio-router.desktop").exists())
+ok("Autostart bleibt an (neuer Eintrag, minimiert)", na.exists() and "--minimized" in na.read_text() and "Name=Node-Router" in na.read_text())
+ok("neuer Startmenü-Eintrag", nm.exists() and "--minimized" not in nm.read_text())
+subprocess.run(["rm", "-rf", str(tmpx)])
 finish(fails)

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Startet das gebaute AppImage wie ein Nutzer (mit Test-Config in Temp-Ordnern) und
 prüft, dass es aus der Einzeldatei heraus mit PipeWire arbeitet: virtuelles Mikro
 (pactl), Effekt-Prozess (pipewire -c), Speicherorte, Icon, Einzelinstanz.
@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import NR, OUT, SKIP, finish  # noqa: E402
 import pw_backend as pw  # noqa: E402
 
-imgs = sorted(glob.glob(str(NR / "build" / "DIY-Audio-Router-*-x86_64.AppImage")))
+imgs = sorted(glob.glob(str(NR / "build" / "Node-Router-*-x86_64.AppImage")))
 if not imgs:
     print("SKIP: kein AppImage gebaut (./build_appimage.sh)"); sys.exit(SKIP)
 IMG = imgs[-1]
@@ -28,7 +28,7 @@ def until(cond, s):
 
 H = OUT / "appimage_home"
 subprocess.run(["rm", "-rf", str(H)])
-cfg_dir, data_dir = H / "config" / "diy-audio-router", H / "data" / "diy-audio-router"
+cfg_dir, data_dir = H / "config" / "node-router", H / "data" / "node-router"
 cfg_dir.mkdir(parents=True)
 MIC, FXID = "diy_selftest_appimg", "selftestai"
 (cfg_dir / "config.json").write_text(json.dumps({
@@ -43,7 +43,7 @@ env = dict(os.environ, XDG_CONFIG_HOME=str(H / "config"), XDG_DATA_HOME=str(H / 
 env.pop("DIY_ROUTER_CONFIG", None)
 
 v = subprocess.run([IMG, "--version"], capture_output=True, text=True, env=env, timeout=60)
-ok("--version", v.returncode == 0 and "DIY Audio Router" in v.stdout, v.stdout.strip() or v.stderr.strip()[-200:])
+ok("--version", v.returncode == 0 and "Node-Router" in v.stdout, v.stdout.strip() or v.stderr.strip()[-200:])
 
 t0 = time.time()
 p = subprocess.Popen([IMG, "--minimized"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -52,14 +52,14 @@ ok("virtuelles Mikro aus der Config angelegt (pactl aus dem Bundle)", until(lamb
    f"nach {time.time() - t0:.1f} s")
 ok("Effekt-Prozess läuft (pipewire -c aus dem Bundle)",
    until(lambda: {f"diy_fx_{FXID}_in", f"diy_fx_{FXID}_out"} <= names(), 25))
-ok("Effekt-Dateien unter ~/.local/share/diy-audio-router/fx", (data_dir / "fx" / f"{FXID}.conf").exists())
+ok("Effekt-Dateien unter ~/.local/share/node-router/fx", (data_dir / "fx" / f"{FXID}.conf").exists())
 for suf, name in (("dn", "Rauschunterdrückung"), ("cp", "Kompressor"), ("dk", "Ducking")):
     ok(f"{name} läuft mit mitgeliefertem Plugin", until(lambda s=suf: f"diy_fx_{FXID}{s}_in" in names(), 15))
 conf = (data_dir / "fx" / f"{FXID}dn.conf").read_text() if (data_dir / "fx" / f"{FXID}dn.conf").exists() else ""
 ok("…Plugin dauerhaft unter ~/.local/share abgelegt (nicht im AppImage-Mount)",
    f"{data_dir}/plugins/librnnoise_ladspa.so" in conf and ".mount_" not in conf, [l.strip() for l in conf.splitlines() if "plugin =" in l][:1])
 ok("Icon dauerhaft nach ~/.local/share kopiert", (data_dir / "icon.svg").exists())
-ok("Config unter ~/.config/diy-audio-router gelesen", (cfg_dir / "config.json").exists())
+ok("Config unter ~/.config/node-router gelesen", (cfg_dir / "config.json").exists())
 s = subprocess.run([IMG], env=env, capture_output=True, text=True, timeout=60)
 ok("zweiter Start: läuft bereits", s.returncode == 0 and "läuft bereits" in s.stderr, s.stderr.strip()[-120:])
 ok("AppImage läuft weiter", p.poll() is None)

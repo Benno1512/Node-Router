@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 benborofn-lgtm – DIY Audio Router
+# Copyright (C) 2026 benborofn-lgtm – Node-Router
 """Volume slider test on test objects only (diy_selftest_vol mic + diy_selftest_app stream)."""
 import re, subprocess, sys, time
 from pathlib import Path
