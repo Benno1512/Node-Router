@@ -1,17 +1,17 @@
-# persönliche Einstellungen (Geräte, Routen, Positionen)
+# personal settings (devices, routes, positions)
 config.json
 selftest_config.json
 
-# Laufzeitdateien der Effekt-Bausteine (werden aus config.json erzeugt)
+# runtime files of the effect blocks (generated from config.json)
 fx/
 
-# Plugins in plugins/ werden mitgeliefert (siehe plugins/README.md)
+# plugins in plugins/ are bundled (see plugins/README.md)
 
-# Ausgaben von selftest.py
+# output of selftest.py
 selftest.log
 selftest_screenshot.png
 
-# Python / Werkzeuge
+# Python / tools
 __pycache__/
 *.pyc
 .venv/

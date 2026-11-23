@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Selbsttest für den Node-Router. Schreibt alles nach selftest.log."""
+"""Self-test for Node-Router. Writes everything to selftest.log."""
 from __future__ import annotations
 
 import os
@@ -32,7 +32,7 @@ def step(name, fn):
     try:
         fn(); log("OK")
     except Exception:
-        log("FEHLER:\n" + traceback.format_exc())
+        log("ERROR:\n" + traceback.format_exc())
 
 
 def env():
@@ -65,40 +65,40 @@ def virtual_mic():
     time.sleep(1)
     g = pw.read_graph()
     nodes = [n for n in g.nodes.values() if n.name == TEST]
-    assert nodes, "virtuelles Mikro nicht im Graph gefunden"
+    assert nodes, "virtual mic not found in the graph"
     n = nodes[0]
     log(f"  class={n.media_class} label={n.label!r} virt={n.is_virtual_mic} "
         f"right={n.is_right} in={[p.name for p in n.in_ports]} out={[p.name for p in n.out_ports]}")
-    assert n.is_right, "virtuelles Mikro landet nicht auf der rechten Seite"
-    assert n.label == "Selftest Mic", f"Beschreibung abgeschnitten: {n.label!r}"
+    assert n.is_right, "virtual mic does not end up on the right side"
+    assert n.label == "Selftest Mic", f"description truncated: {n.label!r}"
     sinks = [x for x in g.nodes.values() if x.media_class == "Audio/Sink"]
-    assert all(p.monitor for x in sinks for p in x.out_ports), "Monitor-Ports nicht erkannt"
+    assert all(p.monitor for x in sinks for p in x.out_ports), "monitor ports not detected"
     log("  pactl sources:")
     log("   " + "\n   ".join(l for l in sh(["pactl", "list", "short", "sources"])[1].splitlines()
-                            if TEST in l) or "   (nicht als Source sichtbar!)")
+                            if TEST in l) or "   (not visible as a source!)")
 
     srcs = [s for s in g.nodes.values() if s.is_left]
-    assert srcs, "keine Quelle zum Testen"
+    assert srcs, "no source to test with"
     s = srcs[0]
-    log(f"  verbinde {s.label!r} -> Selftest Mic: {pw.port_pairs(s, n)}")
+    log(f"  connecting {s.label!r} -> Selftest Mic: {pw.port_pairs(s, n)}")
     errs = pw.connect(g, s.id, n.id)
     assert not errs, errs
     time.sleep(0.5)
     g = pw.read_graph()
     links = [l for l in g.links if l.out_node == s.id and l.in_node == n.id]
-    log(f"  {len(links)} Links erstellt")
-    assert links, "Link wurde nicht erstellt"
+    log(f"  {len(links)} links created")
+    assert links, "link was not created"
     pw.disconnect(g, s.id, n.id)
     time.sleep(0.5)
     g = pw.read_graph()
-    assert not [l for l in g.links if l.out_node == s.id and l.in_node == n.id], "Trennen fehlgeschlagen"
-    log("  getrennt")
+    assert not [l for l in g.links if l.out_node == s.id and l.in_node == n.id], "disconnecting failed"
+    log("  disconnected")
 
 
 def cleanup():
     pw.remove_virtual_mic(TEST)
     time.sleep(0.5)
-    assert TEST not in sh(["pactl", "list", "short", "modules"])[1], "Modul noch geladen"
+    assert TEST not in sh(["pactl", "list", "short", "modules"])[1], "module still loaded"
 
 
 def gui():
@@ -111,16 +111,16 @@ def gui():
     w = m.MainWindow(); w.show()
     QTimer.singleShot(3000, app.quit)
     app.exec()
-    log(f"  Nodes in Szene: {len(w.view.node_items)}, Wires: {len(w.view.wires)}")
+    log(f"  nodes in scene: {len(w.view.node_items)}, wires: {len(w.view.wires)}")
     shot = HERE / "selftest_screenshot.png"
     w.grab().save(str(shot)); log(f"  Screenshot: {shot}")
-    assert w.view.node_items, "keine Nodes angezeigt"
+    assert w.view.node_items, "no nodes shown"
     (HERE / "selftest_config.json").unlink(missing_ok=True)
 
 
-step("Umgebung", env)
-step("Graph lesen", graph)
-step("Virtuelles Mikro + Verbinden/Trennen", virtual_mic)
-step("Aufräumen", cleanup)
+step("Environment", env)
+step("Read graph", graph)
+step("Virtual mic + connect/disconnect", virtual_mic)
+step("Cleanup", cleanup)
 step("GUI (offscreen)", gui)
-log(f"\nFertig. Log: {LOG}")
+log(f"\nDone. Log: {LOG}")

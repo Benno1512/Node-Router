@@ -1,171 +1,198 @@
 # Node-Router
 
-PipeWire-Patchbay im Node-RED-Stil: Quellen links, Ziele rechts, dazwischen Verbindungen
-und Effekt-Bausteine. Virtuelle Mikrofone z. B. für Discord.
+A PipeWire patchbay for Linux in Node-RED style. Sources go on the left, targets on the right, and
+connections and effect blocks sit in between. It can also create virtual microphones, for example
+for Discord.
 
-## Als einzelne Datei (AppImage)
+![Node-Router: sources on the left, targets on the right, effect blocks in between](docs/screenshot.png)
 
-Unter [Releases](https://github.com/benborofn-lgtm/Node-Router/releases) die Datei
-`Node-Router-<version>-x86_64.AppImage` herunterladen, dann:
+## Single file (AppImage)
 
-    chmod +x Node-Router-*-x86_64.AppImage     # oder: Rechtsklick → Eigenschaften → Ausführbar
+Download `Node-Router-<version>-x86_64.AppImage` from
+[Releases](https://github.com/benborofn-lgtm/Node-Router/releases), then run:
+
+    chmod +x Node-Router-*-x86_64.AppImage     # or: right-click → Properties → Executable
     ./Node-Router-*-x86_64.AppImage
 
-Keine Installation, kein Python nötig – Qt und alle Effekt-Plugins (Rauschunterdrückung,
-Kompressor, Ducking) sind enthalten. Einstellungen liegen in `~/.config/node-router/`,
-Effekt-Dateien in `~/.local/share/node-router/`.
-Selbst bauen: `./build_appimage.sh` (lädt PySide6, PyInstaller und appimagetool).
+Nothing to install and no Python needed: Qt and all effect plugins (noise suppression,
+compressor, ducking) are included. Settings live in `~/.config/node-router/` and effect files in
+`~/.local/share/node-router/`.
+To build it yourself, run `./build_appimage.sh` (it downloads PySide6, PyInstaller and appimagetool).
 
-## Was du brauchst
+## Requirements
 
-Vom System kommt nur der **Sound-Server**: PipeWire mit pipewire-pulse und WirePlumber
-plus deren Kommandozeilen-Werkzeuge (`pw-link`, `pactl` …). Auf aktuellen Desktop-Systemen
-ist das vorinstalliert (Ubuntu ab 22.10, Fedora ab 34, Linux Mint 22, Manjaro/Arch mit
-KDE/GNOME). Fehlt etwas, sagt die App beim Start Bescheid und zeigt den Befehl. Oder:
+The only thing that has to come from the system is the **sound server**: PipeWire with
+pipewire-pulse and WirePlumber, plus their command line tools (`pw-link`, `pactl` …). Current
+desktop systems ship these preinstalled (Ubuntu 22.10 and later, Fedora 34 and later, Linux Mint 22,
+Manjaro/Arch with KDE/GNOME). If something is missing, the app tells you at startup and shows the
+command to fix it. Or run:
 
-    ./install-deps.sh          # erkennt die Distribution, fragt vor dem Installieren
+    ./install-deps.sh          # detects the distribution and asks before installing
 
-Das Skript führt je nach System aus (danach einmal ab- und wieder anmelden):
+Depending on the system, the script runs the following. Log out and back in once afterwards.
 
-| System | Befehl |
+| System | Command |
 |---|---|
 | Ubuntu, Debian, Mint | `sudo apt install pipewire pipewire-pulse pipewire-bin wireplumber pulseaudio-utils libsndfile1 libxcb-cursor0` |
 | Fedora | `sudo dnf install pipewire pipewire-pulseaudio pipewire-utils wireplumber pulseaudio-utils libsndfile xcb-util-cursor` |
 | Arch, Manjaro | `sudo pacman -S --needed pipewire pipewire-pulse wireplumber libpulse libsndfile xcb-util-cursor` |
 | openSUSE | `sudo zypper install pipewire pipewire-pulseaudio pipewire-tools wireplumber pulseaudio-utils libsndfile1 libxcb-cursor0` |
-| alle | `systemctl --user enable --now pipewire pipewire-pulse wireplumber` |
+| all | `systemctl --user enable --now pipewire pipewire-pulse wireplumber` |
 
-Getestet ist nur Ubuntu 24.04; die übrigen Paketnamen stammen aus den offiziellen
-Paketquellen. Das AppImage braucht außerdem glibc ≥ 2.39 (Ubuntu 24.04, Fedora 40 und neuer).
+Only Ubuntu 24.04 has been tested. The other package names come from the distributions'
+official repositories. The AppImage also needs glibc ≥ 2.39 (Ubuntu 24.04, Fedora 40 or newer).
 
-## Installation aus dem Quellcode
+## Installing from source
 
-Voraussetzung: Linux mit **PipeWire + pipewire-pulse** und WirePlumber, Python ≥ 3.10.
-Getestet mit Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
+You need Linux with **PipeWire + pipewire-pulse** and WirePlumber, and Python ≥ 3.10.
+Tested on Ubuntu 24.04 (PipeWire 1.0.5, WirePlumber 0.4.17).
 
     git clone https://github.com/benborofn-lgtm/Node-Router.git
     cd Node-Router
     ./install.sh                         # optional: --autostart
 
-`install.sh` prüft die Systempakete, legt `.venv` an, installiert PySide6 und erstellt einen
-Startmenü-Eintrag „Node-Router“. Kein root nötig. Optional:
+`install.sh` checks the system packages, creates `.venv`, installs PySide6 and adds a
+"Node-Router" entry to the app menu. It does not need root. The effect plugins are already
+in `plugins/` (see [plugins/README.md](plugins/README.md)). `./install.sh --uninstall` removes
+the app menu and autostart entries.
 
-- Die Effekt-Plugins liegen bereits in `plugins/` (siehe `plugins/README.md`)
-- `./install.sh --uninstall` entfernt Startmenü- und Autostart-Eintrag
+To start it by hand, run `.venv/bin/python main.py`. With `--minimized` it starts in the tray only.
 
-Manuell starten: `.venv/bin/python main.py` (bzw. `--minimized`: nur ins Tray).
+## Running in the background
 
-## Hintergrundbetrieb
+Closing the window leaves the router running in the **tray**. The tray icon offers
+Open window, Router active and Quit.
 
-Fenster schließen = Router läuft im **Tray** weiter (Symbol in der Taskleiste: Öffnen,
-Aktiv/Deaktiviert, Beenden). Nur solange er läuft, werden Routen bei App-Neustarts
-wiederhergestellt, blockierte Routen durchgesetzt und virtuelle Mikros/Effekte nach einem
-Neustart von PipeWire neu angelegt. **⋯ → Beim Anmelden starten** startet ihn automatisch
-(minimiert). Ein zweiter Start öffnet nur das vorhandene Fenster.
+The router can only do the following while it is running:
+- restore routes when an app restarts
+- enforce blocked routes
+- re-create virtual mics and effects after PipeWire restarts
 
-## Bedienung
+**⋯ → Start at login** starts it automatically, minimized. Starting it a second time only
+brings up the existing window.
 
-- Links: Eingabegeräte (grün) und Anwendungs-Streams (blau)
-- Rechts: echte Ausgabegeräte (orange) und virtuelle Mikrofone (lila)
-- Port ziehen → Port: verbinden · Wire anklicken + Entf / Doppelklick: trennen
-- Zwei feste Listen an der linken und rechten Fensterkante, dazwischen die Routing-Fläche.
-  Einträge nur hoch/runter ziehen (Sortierung wird gespeichert). Kein Zoom, kein seitliches Scrollen.
-- Rechtsklick: virtuelles Mikro anlegen/umbenennen/löschen
-- Jede Karte hat einen Lautstärkeregler (0–150 %, Strich = 100 %): ziehen, Mausrad ±5 %,
-  Doppelklick = 100 %, Lautsprecher-Symbol = stumm. Wirkt auf das ganze Gerät bzw. die
-  ganze App (wie pavucontrol), nicht auf einzelne Verbindungen.
-- **● Aktiv / ○ Deaktiviert** (oben): schaltet den Router aus, ohne ihn zu schließen – eigene
-  Verbindungen werden getrennt, Effekte gestoppt, gesperrte App→Standard-Lautsprecher-Verbindungen
-  wiederhergestellt; virtuelle Mikros bleiben. Erneut klicken stellt alles wieder her.
-- ⋯ → Design: Dunkel, Hell oder „Wie System“ (folgt dem KDE/GNOME-Farbschema live)
-- In Discord: Einstellungen → Sprache & Video → Eingabegerät → dein virtuelles Mikro
+## Usage
 
-## Effekt-Bausteine
+- Left: input devices (green) and application streams (blue).
+- Right: real output devices (orange) and virtual microphones (purple).
+- Drag from one port to another to connect them. To disconnect, click a wire and press Del,
+  or double-click the wire.
+- The two lists are fixed to the left and right window edges, with the routing area in between.
+  Entries can only be dragged up or down, and the order is saved. There is no zoom and no
+  horizontal scrolling.
+- Right-click to add, rename or delete a virtual microphone.
+- Every card has a volume slider (0–150 %, the tick marks 100 %):
+  - drag it, or use the mouse wheel for ±5 %
+  - double-click resets it to 100 %
+  - the speaker icon mutes
 
-Doppelklick in die Routing-Fläche (oder Rechtsklick → Baustein hinzufügen) öffnet das
-Baustein-Menü: **Hochpass**, **Equalizer** (Bass/Mitten/Höhen), **Delay**, **Hall**,
-**Rauschunterdrückung** (RNNoise), **Kompressor** und **Ducking**.
+  It affects the whole device or app, like pavucontrol does, not single connections.
+- **● Active / ○ Disabled** (top) turns the router off without closing it:
+  - your own connections are removed and effects are stopped
+  - blocked app → default speaker connections are restored
+  - virtual mics stay
 
-- **Ducking** hat zwei Eingänge: *Musik* wird abgesenkt, sobald *Priorität* (z. B. dein Mikro)
-  die Schwelle überschreitet. Der Ausgang liefert die abgesenkte Musik – die Priorität selbst
-  zusätzlich direkt mit dem Ziel verbinden (ein Ausgang kann mehrere Wires haben).
-- Benötigt: `sudo apt install lsp-plugins-ladspa` (Kompressor, Ducking) und
-  `plugins/librnnoise_ladspa.so` aus github.com/werman/noise-suppression-for-voice (v1.10,
-  braucht `libatomic1`). Fehlt etwas, ist der Eintrag im Menü ausgegraut, der Tooltip sagt warum.
+  Click it again to bring everything back.
+- ⋯ → Theme: Dark, Light or Follow system (follows the KDE/GNOME color scheme live).
+- In Discord: Settings → Voice & Video → Input Device → your virtual mic.
 
-Bausteine lassen sich frei im Netz verschieben und wie Ein-/Ausgänge verbinden
-(Quelle → Baustein → Baustein → Ziel). Regler wirken live; Mausrad = fein,
-Doppelklick = Standardwert. Rechtsklick auf einen Baustein: zurücksetzen, trennen, entfernen.
+## Effect blocks
 
-Technik: Jeder Baustein ist ein eigener `pipewire -c fx/<id>.conf`-Prozess (PipeWire
-filter-chain, Nodes `diy_fx_<id>_in/_out`, ohne Autoconnect). Er läuft weiter, wenn
-der Router geschlossen wird, und wird beim Start wiederverwendet bzw. neu gestartet.
-Nur „Nachhall“ beim Hall erzeugt eine neue Impulsantwort und startet den Baustein kurz
-neu (Verbindungen werden automatisch wiederhergestellt).
+Double-click the routing area (or right-click → Add block) to open the block menu. It offers
+**High-pass**, **Equalizer** (bass/mids/treble), **Delay**, **Reverb**, **Noise suppression**
+(RNNoise), **Compressor** and **Ducking**.
 
-Gespeichert in `config.json` (virtuelle Mikros, Effekt-Bausteine, eigene Routen, blockierte Routen,
-Reihenfolge der Listen). Routen werden automatisch wiederhergestellt, wenn eine App neu startet.
+- **Ducking** has two inputs. *Music* is turned down as soon as *Priority* (your mic, for example)
+  crosses the threshold. The output carries the ducked music. To hear the priority signal too,
+  connect it to the target directly as well; an output can have several wires.
+- The plugins for noise suppression, compressor and ducking ship with Node-Router
+  (see [plugins/README.md](plugins/README.md)). If one cannot be loaded, its menu entry is
+  greyed out and the tooltip says why.
 
-Verschwindet eine App oder ein Gerät (z. B. Video pausiert), bleibt die Karte ausgegraut an
-ihrem Platz; gespeicherte Verbindungen werden gestrichelt angezeigt und beim Zurückkommen
-wiederhergestellt. Auch an ausgegraute Karten kann man Verbindungen anlegen/trennen (nur die
-gespeicherte Route). Rechtsklick → „Aus Liste entfernen“ entfernt die Karte (Routen bleiben).
+You can move blocks freely around the mesh and connect them like inputs and outputs
+(source → block → block → target). Sliders work live. Use the mouse wheel for fine steps, and
+double-click a slider to reset it to its default. Right-clicking a block lets you reset,
+disconnect or remove it.
 
-Rechtsklick → „Ignorieren“ blendet eine App/ein Gerät dauerhaft aus – auch wenn es erneut Ton
-abspielt (z. B. libcanberra/Systemklänge). Rückgängig: ⋯ → Ausgeblendet → wieder anzeigen.
-Bestehende Verbindungen/Routen werden dabei nicht verändert.
+How it works: every block is its own `pipewire -c fx/<id>.conf` process, a PipeWire
+filter-chain with the nodes `diy_fx_<id>_in/_out` and no autoconnect. The process keeps running
+when the router is closed, and the router reuses or restarts it at the next start. Changing the
+reverb's "Decay" is the only change that restarts a block. It generates a new impulse response,
+so the block restarts briefly and its connections are restored automatically.
 
-Getrennte Verbindungen werden als „blockiert“ gemerkt: Legt WirePlumber z. B. beim
-Neustart einer App den Link App → Lautsprecher wieder an, entfernt das Programm ihn
-(nach ca. 0,2 s – so lange ist die App kurz zu hören). Erneutes Verbinden per Drag
-hebt die Blockierung auf. Wirkt nur, solange das Programm läuft.
+`config.json` stores virtual mics, effect blocks, your own routes, blocked routes and the order
+of the lists. Routes are restored automatically when an app restarts.
+
+### Paused apps, ignore and blocked routes
+
+**Paused apps.** If an app or device disappears (a video is paused, for example), its card stays
+in place, greyed out:
+- saved connections are shown dashed and come back when it returns
+- you can connect and disconnect greyed-out cards too; this changes only the saved route
+- right-click → "Remove from list" removes the card, and its routes stay saved
+
+**Ignore.** Right-click → "Ignore (never show again)" hides an app or device for good, even when
+it plays sound again (libcanberra system sounds, for example). Existing connections and routes
+are left as they are. To undo it, use ⋯ → Hidden → show again.
+
+**Blocked routes.** Connections you remove are remembered as "blocked". If WirePlumber recreates
+the app → speaker link (for example when the app restarts), Node-Router removes it again. That
+takes about 0.2 s, so the app is briefly audible. Connecting the two again by dragging lifts the
+block. This only works while the router is running.
 
 ## Tests
 
-    cd node_router
-    ../.venv/bin/python tests/run_all.py            # alle (ca. 10 Minuten)
-    ../.venv/bin/python tests/run_all.py fx ghost   # nur Tests, deren Name das enthält
+    .venv/bin/python tests/run_all.py            # all (about 10 minutes)
+    .venv/bin/python tests/run_all.py fx ghost   # only tests whose name contains these
 
-- **Router vorher schließen** – der Runner bricht sonst ab. Ein offener Router würde sich alle
-  Test-Objekte in seiner `config.json` merken.
-- Die Tests öffnen echte Fenster (grafische Sitzung nötig) und legen echte PipeWire-Objekte an:
-  virtuelle Test-Mikros `diy_selftest_*`, stumme Test-Streams, Effekt-Prozesse. Sie benutzen eine
-  eigene Config im Temp-Ordner und spielen nichts über die Lautsprecher ab. Danach räumt der
-  Runner Test-Reste auf – deine eigenen Effekt-Bausteine (aus `config.json`) fasst er nicht an.
-- `test_fx_plugins` wird übersprungen, wenn LSP-Plugins oder RNNoise fehlen.
-- `tests/test_pipewire_restart.py --ja-wirklich` startet PipeWire **echt** neu (kurze Ton-
-  unterbrechung für alle Programme) und prüft, dass Mikro, Effekt, Routen und Ton zurückkommen.
-  Nicht Teil von `run_all.py`; nur manuell ausführen.
+- **Close the router first.** Otherwise the runner aborts, because an open router would remember
+  every test object in its `config.json`.
+- The tests open real windows, so they need a graphical session. They also create real PipeWire
+  objects: virtual test mics `diy_selftest_*`, silent test streams and effect processes.
+- They use their own config in a temp folder and play nothing through the speakers.
+- Afterwards the runner cleans up test leftovers. It never touches your own effect blocks
+  (the ones in `config.json`).
+- `test_fx_plugins` is skipped if the LSP plugins or RNNoise cannot be loaded.
+- `tests/test_pipewire_restart.py --yes-really` **really** restarts PipeWire, which briefly
+  interrupts the sound of every program. It checks that the mic, effect, routes and sound come back.
+  It is not part of `run_all.py`; run it by hand only.
 
-| Test | prüft |
+| Test | Checks |
 |---|---|
-| `selftest.py` | Umgebung, Graph lesen, virtuelles Mikro, Verbinden/Trennen, GUI offscreen |
-| `test_menu` | Baustein-Menü: Beschreibungen, gesperrte Einträge, Klick/Loslassen |
-| `test_order` | feste Listen an den Fensterkanten, Sortieren, Größenänderung, kein Zoom |
-| `test_volume` | Lautstärkeregler und Stumm-Knopf gegen `wpctl` |
-| `test_theme` | Dunkel/Hell/System, Umschalten ohne Neustart |
-| `test_ignore` | Ignorieren und wieder anzeigen |
-| `test_ghost` | ausgegraute Karten, gestrichelte Routen, Wiederherstellung |
-| `test_blocked` | blockierte Routen gegen WirePlumber-Neuverbindung |
-| `test_power` | Ein/Aus-Knopf |
-| `test_background` | Tray, Autostart-Schalter, Einzelinstanz, Neustart der Überwachung, verlorene virtuelle Mikros |
-| `test_fx` | Hochpass/EQ/Delay/Hall: Signal, Regler, Verschieben, Neustart, Entfernen |
-| `test_fx_plugins` | Rauschunterdrückung, Kompressor, Ducking mit zwei Eingängen |
+| `selftest.py` | environment, reading the graph, virtual mic, connect/disconnect, GUI offscreen |
+| `test_menu` | block menu: descriptions, unavailable entries, click/release |
+| `test_order` | fixed lists at the window edges, sorting, resizing, no zoom |
+| `test_volume` | volume slider and mute button against `wpctl` |
+| `test_theme` | dark/light/system, switching without restart |
+| `test_ignore` | ignoring and showing again |
+| `test_ghost` | greyed-out cards, dashed routes, restoring |
+| `test_blocked` | blocked routes against WirePlumber reconnecting |
+| `test_power` | on/off button |
+| `test_background` | tray, autostart toggle, single instance, monitor restart, lost virtual mics |
+| `test_deps` | system check, missing-dependency dialog, bundled plugins, libatomic fallback |
+| `test_fx` | high-pass/EQ/delay/reverb: signal, sliders, moving, restart, removing |
+| `test_fx_plugins` | noise suppression, compressor, ducking with two inputs |
+| `test_appimage` | the built AppImage end to end (skipped without a build) |
 
-## Bekannte Grenzen
+## Known limitations
 
-- Getestet nur mit **Ubuntu 24.04, PipeWire 1.0.5, WirePlumber 0.4.17**. Neuere Versionen
-  (insbesondere WirePlumber 0.5 mit anderer Konfiguration) sind ungetestet.
-- Noch **nicht mit Discord und echter Sprache** getestet – Checkliste: [TESTING.md](TESTING.md).
-- Routen wiederherstellen, blockierte Routen und das Neuanlegen von Mikros/Effekten nach einem
-  PipeWire-Neustart funktionieren nur, solange der Router läuft (Tray/Autostart nutzen).
-- Ist eine blockierte App neu gestartet, ist sie bis zu ca. 0,3 s über den Standard-Lautsprecher
-  zu hören, bevor der Router die WirePlumber-Verbindung trennt.
-- Lautstärke pro **Verbindung** gibt es noch nicht (nur pro Gerät/App).
+- Only tested on **Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17**. Newer versions
+  are untested, especially WirePlumber 0.5, which is configured differently.
+- Not yet tested **with Discord and real speech**. See the checklist in [TESTING.md](TESTING.md).
+- These only work while the router is running (use the tray or autostart):
+  - restoring routes
+  - blocked routes
+  - re-creating mics and effects after a PipeWire restart
+- When a blocked app restarts, it can be heard on the default speaker for up to about 0.3 s
+  before the router removes the WirePlumber link.
+- There is no volume per **connection** yet, only per device or app.
 
-## Lizenz
+## License
 
-GPL-3.0-or-later, siehe [LICENSE](LICENSE). Änderungen: [CHANGELOG.md](CHANGELOG.md).
-Mitgelieferte Plugins anderer Projekte ([LSP-Plugins](https://lsp-plug.in/), LGPL-3.0;
-[RNNoise](https://github.com/werman/noise-suppression-for-voice), GPL-3.0; libatomic aus GCC)
-stehen unter ihren eigenen Lizenzen – Details, Versionen und Quellen in `plugins/README.md`.
+GPL-3.0-or-later, see [LICENSE](LICENSE). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+The bundled plugins come from other projects and keep their own licenses:
+- [LSP Plugins](https://lsp-plug.in/), LGPL-3.0
+- [RNNoise](https://github.com/werman/noise-suppression-for-voice), GPL-3.0
+- libatomic from GCC
+
+Details, versions and sources are in [plugins/README.md](plugins/README.md).

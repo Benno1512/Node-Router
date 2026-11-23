@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 
 VIRTUAL_PREFIX = "diy_"
-FX_PREFIX = "diy_fx_"          # Effekt-Bausteine (siehe fx.py)
+FX_PREFIX = "diy_fx_"          # effect blocks (see fx.py)
 
 
 @dataclass
@@ -31,7 +31,7 @@ class Node:
     media_class: str
     app_name: str
     media_name: str
-    volume: float | None = None   # wie wpctl/pavucontrol: 1.0 = 100 % (kubische Skala)
+    volume: float | None = None   # like wpctl/pavucontrol: 1.0 = 100 % (cubic scale)
     mute: bool | None = None
     in_ports: list[Port] = field(default_factory=list)
     out_ports: list[Port] = field(default_factory=list)
@@ -74,13 +74,13 @@ class Node:
     @property
     def sublabel(self) -> str:
         if self.is_virtual_mic:
-            return "Virtuelles Mikrofon"
+            return "Virtual microphone"
         if self.is_stream:
-            return self.media_name or "Anwendung"
+            return self.media_name or "Application"
         return {
-            "Audio/Source": "Eingabegerät",
-            "Audio/Sink": "Ausgabegerät",
-            "Audio/Source/Virtual": "Virtuelle Quelle",
+            "Audio/Source": "Input device",
+            "Audio/Sink": "Output device",
+            "Audio/Source/Virtual": "Virtual source",
         }.get(self.media_class, self.media_class)
 
     # role in the router UI
@@ -135,13 +135,13 @@ class Graph:
 
 
 def _dump_objects(raw: str) -> list[dict]:
-    """pw-dump-Ausgabe -> Objektliste.
+    """pw-dump output -> list of objects.
 
-    Ändert sich der Graph während des Dumps (Client kommt/geht, App wird beendet),
-    hängt pw-dump hinter dem vollständigen Array weitere kleine Arrays mit diesen
-    Änderungen an – json.loads meldet dann „Extra data“. Am System beobachtet
-    (PipeWire 1.0.5). Diese Nachträge werden hier wie im --monitor-Modus angewendet:
-    {"id": N, "info": null} ohne Typ = entfernt, sonst hinzugefügt/ersetzt."""
+    If the graph changes during the dump (client comes/goes, app quits), pw-dump
+    appends further small arrays with these changes after the complete array –
+    json.loads then reports "Extra data". Observed on the system (PipeWire 1.0.5).
+    These updates are applied like in --monitor mode:
+    {"id": N, "info": null} without a type = removed, otherwise added/replaced."""
     dec, pos, blocks = json.JSONDecoder(), 0, []
     raw = raw or "[]"
     while True:
@@ -149,7 +149,7 @@ def _dump_objects(raw: str) -> list[dict]:
             pos += 1
         if pos >= len(raw):
             break
-        val, pos = dec.raw_decode(raw, pos)      # wirft bei wirklich kaputtem JSON
+        val, pos = dec.raw_decode(raw, pos)      # raises on genuinely broken JSON
         blocks.append(val)
     if not blocks:
         return []
@@ -170,8 +170,8 @@ def parse_dump(raw: str) -> Graph:
     nodes: dict[int, Node] = {}
     ports: list[Port] = []
     links: list[Link] = []
-    # Hardware-Geräte: Lautstärke/Stumm liegen in der Route des Device
-    # (Node-Props zeigen dort z.B. mute=False, obwohl die Route stumm ist)
+    # hardware devices: volume/mute live in the device's route
+    # (node props show e.g. mute=False there although the route is muted)
     routes: dict[tuple[int, int], dict] = {}
     node_dev: dict[int, tuple[int, int]] = {}
     for o in objs:
@@ -210,7 +210,7 @@ def parse_dump(raw: str) -> Graph:
                     direction=info.get("direction", ""),
                     name=props.get("port.name", ""),
                     channel=props.get("audio.channel", ""),
-                    # pw-dump liefert hier ein JSON-Bool (True), keinen String
+                    # pw-dump returns a JSON bool (True) here, not a string
                     monitor=str(props.get("port.monitor", False)).lower() == "true",
                 ))
             except (TypeError, ValueError):
@@ -242,7 +242,7 @@ def parse_dump(raw: str) -> Graph:
 
 
 def _volume_of(props_list: list) -> tuple[float | None, bool | None]:
-    """channelVolumes sind linear; Anzeige wie wpctl = Kubikwurzel."""
+    """channelVolumes are linear; displayed like wpctl = cube root."""
     for d in props_list:
         if not isinstance(d, dict):
             continue
@@ -262,11 +262,11 @@ def read_graph() -> Graph:
     for attempt in range(4):
         r = _run(["pw-dump"])
         if r.returncode != 0:
-            raise RuntimeError(f"pw-dump fehlgeschlagen: {r.stderr.strip()}")
+            raise RuntimeError(f"pw-dump failed: {r.stderr.strip()}")
         try:
             return parse_dump(r.stdout)
         except json.JSONDecodeError:
-            # kaputtes JSON, wenn während des Dumps Objekte verschwinden
+            # broken JSON when objects vanish during the dump
             if attempt == 3:
                 raise
             time.sleep(0.1)
@@ -276,8 +276,8 @@ def read_graph() -> Graph:
 
 def port_pairs(src: Node, dst: Node, dst_channels: list[str] | None = None) -> list[tuple[int, int]]:
     """Map source output ports to destination input ports by channel.
-    dst_channels: nur diese Zieleingänge benutzen (z. B. ["RL", "RR"] für den
-    Prioritätseingang des Ducking-Bausteins); Quelle FL/FR -> 1./2. Kanal."""
+    dst_channels: only use these target inputs (e.g. ["RL", "RR"] for the
+    priority input of the ducking block); source FL/FR -> 1st/2nd channel."""
     outs, ins = src.playable_out, dst.in_ports
     if dst_channels is not None:
         by = {i.channel: i for i in ins}
@@ -350,10 +350,10 @@ def create_virtual_mic(display_name: str, node_name: str | None = None) -> str:
     node_name = node_name or slug(display_name)
     if _find_module(node_name):
         return node_name
-    # Der Modul-Parser von pipewire-pulse beendet einen ungequoteten Wert am
-    # ersten Leerzeichen -> der ganze Wert muss gequotet sein, innen \" escapen.
-    # Getestet mit PipeWire 1.0.5: Leerzeichen, Apostroph, Umlaute ok;
-    # " und \ lassen sich nicht sauber durchreichen und werden entfernt.
+    # pipewire-pulse's module argument parser ends an unquoted value at the
+    # first space -> the whole value must be quoted, with \" escaped inside.
+    # Tested with PipeWire 1.0.5: spaces, apostrophes, umlauts ok;
+    # " and \ cannot be passed through cleanly and are removed.
     desc = display_name.replace('"', "").replace("\\", "").strip() or node_name
     r = _run([
         "pactl", "load-module", "module-null-sink",
@@ -363,7 +363,7 @@ def create_virtual_mic(display_name: str, node_name: str | None = None) -> str:
         f'sink_properties="device.description=\\"{desc}\\""',
     ])
     if r.returncode != 0:
-        raise RuntimeError(f"Konnte virtuelles Mikro nicht anlegen: {r.stderr.strip()}")
+        raise RuntimeError(f"Could not create virtual mic: {r.stderr.strip()}")
     return node_name
 
 
@@ -375,12 +375,12 @@ def remove_virtual_mic(node_name: str) -> None:
 
 # ----------------------------------------------------------------- volume
 
-MAX_VOLUME = 1.5        # 150 %, wie pavucontrol (Mikros leise -> anheben)
+MAX_VOLUME = 1.5        # 150 %, like pavucontrol (boost quiet mics)
 
 
 def set_volume(node_id: int, volume: float) -> None:
-    """Setzt die Lautstärke (1.0 = 100 %). wpctl schreibt bei Hardware-Geräten
-    automatisch in die Route, bei Streams/virtuellen Geräten in die Node-Props."""
+    """Set the volume (1.0 = 100 %). For hardware devices wpctl writes to the
+    route automatically, for streams/virtual devices to the node props."""
     v = min(max(volume, 0.0), MAX_VOLUME)
     _run(["wpctl", "set-volume", str(node_id), f"{v:.3f}"])
 

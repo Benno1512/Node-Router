@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Speicherorte und Start-Umgebung – Quellcode-Betrieb vs. gebündelte App.
+"""Storage locations and launch environment – running from source vs. bundled.
 
-Aus dem Quellcode (python main.py) bleibt alles neben dem Programm:
-    config.json, fx/, plugins/ in node_router/
-Als gebündelte App (AppImage/PyInstaller) ist der Programmordner schreibgeschützt
-bzw. temporär, daher:
+From source (python main.py) everything stays next to the program:
+    config.json, fx/, plugins/ in the repository folder
+As a bundled app (AppImage/PyInstaller) the program folder is read-only or
+temporary, therefore:
     ~/.config/node-router/config.json
     ~/.local/share/node-router/{fx,plugins,icon.svg}
 """
@@ -17,10 +17,10 @@ import sys
 from pathlib import Path
 
 FROZEN = bool(getattr(sys, "frozen", False))
-SRC = Path(__file__).resolve().parent                        # Programmdateien
-RES = Path(getattr(sys, "_MEIPASS", SRC))                    # mitgelieferte Daten (icon.svg)
+SRC = Path(__file__).resolve().parent                        # program files
+RES = Path(getattr(sys, "_MEIPASS", SRC))                    # bundled data (icon.svg)
 APP_ID = "node-router"
-LEGACY_ID = "diy-audio-router"          # Name bis 0.1.2 („DIY Audio Router“)
+LEGACY_ID = "diy-audio-router"          # name up to 0.1.2 ("DIY Audio Router")
 
 
 def _xdg(var: str, default: str) -> Path:
@@ -36,7 +36,7 @@ def data_dir() -> Path:
 
 
 def _migrate_legacy_dirs() -> None:
-    """Gebündelt: Ordner aus der Zeit vor der Umbenennung übernehmen."""
+    """Bundled: take over folders from before the rename."""
     if not FROZEN:
         return
     for var, default in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share")):
@@ -51,13 +51,13 @@ def _migrate_legacy_dirs() -> None:
 _migrate_legacy_dirs()
 CONFIG = Path(os.environ.get("DIY_ROUTER_CONFIG") or config_dir() / "config.json")
 FX_DIR = data_dir() / "fx"
-PLUGIN_DIR = data_dir() / "plugins"          # vom Nutzer abgelegte Plugins
-BUNDLED_PLUGINS = RES / "plugins"            # mitgelieferte (siehe plugins/README.md)
+PLUGIN_DIR = data_dir() / "plugins"          # plugins placed by the user
+BUNDLED_PLUGINS = RES / "plugins"            # bundled ones (see plugins/README.md)
 
 
 def icon_path() -> Path:
-    """Icon für Desktop-Einträge: im Bundle liegt es nur, solange die App läuft
-    (AppImage wird ins Temp eingehängt) -> dauerhaft nach data_dir() kopieren."""
+    """Icon for desktop entries: inside the bundle it only exists while the app
+    runs (the AppImage is mounted in temp) -> copy it permanently to data_dir()."""
     src = RES / "icon.svg"
     if not FROZEN:
         return src
@@ -72,10 +72,10 @@ def icon_path() -> Path:
 
 
 def install_bundled_plugins() -> None:
-    """Gebündelt: mitgelieferte Plugins nach data_dir()/plugins kopieren.
-    Effekt-Prozesse laufen absichtlich weiter, wenn der Router beendet wird – das
-    AppImage wird dann aber ausgehängt. Würden sie das Plugin direkt aus dem
-    AppImage laden, stürzten sie ab, sobald es weg ist."""
+    """Bundled: copy the bundled plugins to data_dir()/plugins.
+    Effect processes intentionally keep running when the router quits – but the
+    AppImage gets unmounted then. If they loaded the plugin directly from the
+    AppImage, they would crash as soon as it is gone."""
     if not FROZEN or not BUNDLED_PLUGINS.is_dir():
         return
     for src in BUNDLED_PLUGINS.rglob("*"):
@@ -88,14 +88,14 @@ def install_bundled_plugins() -> None:
             dst.parent.mkdir(parents=True, exist_ok=True)
             tmp = dst.with_suffix(dst.suffix + ".tmp")
             shutil.copyfile(src, tmp)
-            tmp.replace(dst)                 # atomar: laufende Effekte behalten die alte Datei
+            tmp.replace(dst)                 # atomic: running effects keep the old file
         except OSError:
             pass
 
 
 def launch_command(minimized: bool = False) -> str:
-    """Kommandozeile für Startmenü/Autostart, passend zur Art des Starts."""
-    if os.environ.get("APPIMAGE"):                           # vom AppImage-Runtime gesetzt
+    """Command line for app menu/autostart, matching how we were started."""
+    if os.environ.get("APPIMAGE"):                           # set by the AppImage runtime
         cmd = f'"{os.environ["APPIMAGE"]}"'
     elif FROZEN:
         cmd = f'"{sys.executable}"'
@@ -105,12 +105,11 @@ def launch_command(minimized: bool = False) -> str:
 
 
 def clean_host_env() -> None:
-    """Gebündelte Apps setzen LD_LIBRARY_PATH auf ihre eigenen Bibliotheken.
-    Unsere Kindprozesse sind aber System-Programme (pw-dump, pw-link, pactl,
-    pipewire, xdg-open …) – mit den Bundle-Bibliotheken stürzen sie ab oder
-    verhalten sich falsch. Daher für alle Kindprozesse die Original-Umgebung
-    wiederherstellen. (Der laufende Prozess selbst ist davon nicht betroffen:
-    ld.so liest LD_LIBRARY_PATH nur beim Start.)"""
+    """Bundled apps set LD_LIBRARY_PATH to their own libraries. Our child
+    processes are system programs though (pw-dump, pw-link, pactl, pipewire,
+    xdg-open …) – with the bundle libraries they crash or misbehave. So restore
+    the original environment for all child processes. (The running process
+    itself is not affected: ld.so only reads LD_LIBRARY_PATH at startup.)"""
     if not FROZEN:
         return
     for var in ("LD_LIBRARY_PATH", "LD_PRELOAD"):
@@ -119,6 +118,6 @@ def clean_host_env() -> None:
             os.environ[var] = orig
         else:
             os.environ.pop(var, None)
-    # Qt/Python-Pfade des Bundles sollen nicht an andere Programme vererbt werden
+    # the bundle's Qt/Python paths must not be inherited by other programs
     for var in ("QT_PLUGIN_PATH", "QML2_IMPORT_PATH", "PYTHONHOME", "PYTHONPATH"):
         os.environ.pop(var, None)

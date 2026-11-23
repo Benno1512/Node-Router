@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Effekt-Bausteine als PipeWire filter-chain.
+"""Effect blocks as PipeWire filter-chain.
 
-Jeder Baustein läuft als eigener `pipewire -c <conf>`-Prozess (losgelöst vom
-Router, läuft also weiter, wenn der Router beendet wird – wie Links/virtuelle
-Mikros). Er erzeugt zwei Nodes:
-    diy_fx_<id>_in   (Stream/Input/Audio, Ports input_FL/FR)
-    diy_fx_<id>_out  (Stream/Output/Audio, Ports output_FL/FR)
-beide mit node.autoconnect = false, damit WirePlumber nichts verbindet.
+Every block runs as its own `pipewire -c <conf>` process (detached from the
+router, so it keeps running when the router quits – like links/virtual mics).
+It creates two nodes:
+    diy_fx_<id>_in   (Stream/Input/Audio, ports input_FL/FR)
+    diy_fx_<id>_out  (Stream/Output/Audio, ports output_FL/FR)
+both with node.autoconnect = false, so WirePlumber does not connect anything.
 
-Regler werden live per `pw-cli set-param <in-node> Props { params = [...] }`
-geändert. Nur die Nachhallzeit des Halls ändert die Impulsantwort -> Neustart.
-Getestet mit PipeWire 1.0.5 (builtin bq_highpass/bq_*shelf/bq_peaking, delay,
-convolver mit WAV über libsndfile, copy, mixer).
+Sliders are changed live via `pw-cli set-param <in-node> Props { params = [...] }`.
+Only the reverb decay changes the impulse response -> restart.
+Tested with PipeWire 1.0.5 (builtin bq_highpass/bq_*shelf/bq_peaking, delay,
+convolver with WAV via libsndfile, copy, mixer).
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ import uuid
 import wave
 from pathlib import Path
 
-from paths import BUNDLED_PLUGINS, FX_DIR, PLUGIN_DIR  # noqa: E402  (Quellcode: neben dem Programm, gebündelt: ~/.local/share)
+from paths import BUNDLED_PLUGINS, FX_DIR, PLUGIN_DIR  # noqa: E402  (source: next to the program, bundled: ~/.local/share)
 PREFIX = "diy_fx_"
 LADSPA_DIRS = ["/usr/lib/ladspa", "/usr/lib/x86_64-linux-gnu/ladspa", "/usr/local/lib/ladspa",
                str(Path.home() / ".ladspa")]
@@ -46,61 +46,61 @@ def find_plugin(filename: str) -> str | None:
 def db_to_gain(db: float) -> float:
     return 10 ** (db / 20.0)
 
-# ------------------------------------------------------------------ Typen
-# Parameter: key, label, min, max, default, unit, log (logarithmische Skala),
-# restart (Änderung braucht Neustart statt Live-Steuerung)
+# ------------------------------------------------------------------ types
+# parameters: key, label, min, max, default, unit, log (logarithmic scale),
+# restart (a change needs a restart instead of live control)
 TYPES: dict[str, dict] = {
     "highpass": {
-        "title": "Hochpass",
-        "hint": "Entfernt Brummen/Trittschall unterhalb der Frequenz",
+        "title": "High-pass",
+        "hint": "Removes hum and rumble below the frequency",
         "params": [
-            {"key": "freq", "label": "Frequenz", "min": 20, "max": 1000,
+            {"key": "freq", "label": "Frequency", "min": 20, "max": 1000,
              "default": 80, "unit": "Hz", "log": True},
         ],
     },
     "eq": {
         "title": "Equalizer",
-        "hint": "Bass 120 Hz · Mitten 1 kHz · Höhen 6 kHz",
+        "hint": "Bass 120 Hz · Mids 1 kHz · Treble 6 kHz",
         "params": [
             {"key": "low", "label": "Bass", "min": -12, "max": 12, "default": 0, "unit": "dB"},
-            {"key": "mid", "label": "Mitten", "min": -12, "max": 12, "default": 0, "unit": "dB"},
-            {"key": "high", "label": "Höhen", "min": -12, "max": 12, "default": 0, "unit": "dB"},
+            {"key": "mid", "label": "Mids", "min": -12, "max": 12, "default": 0, "unit": "dB"},
+            {"key": "high", "label": "Treble", "min": -12, "max": 12, "default": 0, "unit": "dB"},
         ],
     },
     "delay": {
         "title": "Delay",
-        "hint": "Verzögert das Signal (z. B. Ton an Bild angleichen)",
+        "hint": "Delays the signal (e.g. to sync audio with video)",
         "params": [
-            {"key": "ms", "label": "Zeit", "min": 0, "max": 2000, "default": 250, "unit": "ms"},
+            {"key": "ms", "label": "Time", "min": 0, "max": 2000, "default": 250, "unit": "ms"},
         ],
     },
     "reverb": {
-        "title": "Hall",
-        "hint": "Raumhall (Faltung mit erzeugter Impulsantwort)",
+        "title": "Reverb",
+        "hint": "Room reverb (convolution with a generated impulse response)",
         "params": [
-            {"key": "mix", "label": "Anteil", "min": 0, "max": 100, "default": 30, "unit": "%"},
-            {"key": "decay", "label": "Nachhall", "min": 0.3, "max": 6.0, "default": 1.8,
+            {"key": "mix", "label": "Mix", "min": 0, "max": 100, "default": 30, "unit": "%"},
+            {"key": "decay", "label": "Decay", "min": 0.3, "max": 6.0, "default": 1.8,
              "unit": "s", "restart": True},
         ],
     },
     "denoise": {
-        "title": "Rauschunterdrückung",
-        "hint": "RNNoise: lässt nur Sprache durch (Lüfter, Tastatur, Rauschen werden entfernt)",
+        "title": "Noise suppression",
+        "hint": "RNNoise: lets only speech through (fans, keyboard, noise are removed)",
         "plugin": "librnnoise_ladspa.so",
-        "missing": "RNNoise-Plugin fehlt: node_router/plugins/librnnoise_ladspa.so "
+        "missing": "RNNoise plugin missing: plugins/librnnoise_ladspa.so "
                    "(github.com/werman/noise-suppression-for-voice)",
         "params": [
-            {"key": "vad", "label": "Schwelle", "min": 0, "max": 95, "default": 50, "unit": "%"},
-            {"key": "grace", "label": "Nachlauf", "min": 0, "max": 1000, "default": 200, "unit": "ms"},
+            {"key": "vad", "label": "Threshold", "min": 0, "max": 95, "default": 50, "unit": "%"},
+            {"key": "grace", "label": "Hold", "min": 0, "max": 1000, "default": 200, "unit": "ms"},
         ],
     },
     "compressor": {
-        "title": "Kompressor",
-        "hint": "Gleicht Lautstärke aus: Pegel über der Schwelle wird im Verhältnis Ratio abgesenkt",
+        "title": "Compressor",
+        "hint": "Evens out loudness: level above the threshold is reduced by the ratio",
         "plugin": "lsp-plugins-ladspa.so",
-        "missing": "LSP-Plugins fehlen: sudo apt install lsp-plugins-ladspa",
+        "missing": "LSP Plugins missing (plugins/lsp-plugins-ladspa.so or: sudo apt install lsp-plugins-ladspa)",
         "params": [
-            {"key": "thresh", "label": "Schwelle", "min": -60, "max": 0, "default": -20, "unit": "dB"},
+            {"key": "thresh", "label": "Threshold", "min": -60, "max": 0, "default": -20, "unit": "dB"},
             {"key": "ratio", "label": "Ratio", "min": 1, "max": 20, "default": 4, "unit": ":1"},
             {"key": "attack", "label": "Attack", "min": 1, "max": 200, "default": 10, "unit": "ms"},
             {"key": "release", "label": "Release", "min": 10, "max": 1000, "default": 100, "unit": "ms"},
@@ -109,27 +109,27 @@ TYPES: dict[str, dict] = {
     },
     "duck": {
         "title": "Ducking",
-        "hint": "Senkt „Musik“ ab, sobald „Priorität“ (z. B. Mikro) die Schwelle überschreitet. "
-                "Ausgang = abgesenkte Musik; die Priorität selbst zusätzlich direkt verbinden.",
+        "hint": "Lowers \"Music\" as soon as \"Priority\" (e.g. a mic) exceeds the threshold. "
+                "Output = lowered music; connect the priority itself directly as well.",
         "plugin": "lsp-plugins-ladspa.so",
-        "missing": "LSP-Plugins fehlen: sudo apt install lsp-plugins-ladspa",
-        # Zwei Eingänge. Positionen RL/RR statt AUX0/1: PipeWire 1.0.5 verwirft
-        # AUX-Kanäle im filter-chain-Eingang (am System gemessen).
+        "missing": "LSP Plugins missing (plugins/lsp-plugins-ladspa.so or: sudo apt install lsp-plugins-ladspa)",
+        # Two inputs. Positions RL/RR instead of AUX0/1: PipeWire 1.0.5 drops
+        # AUX channels on the filter-chain input (measured on the system).
         "inputs": [
-            {"group": "main", "label": "Musik", "channels": ["FL", "FR"]},
-            {"group": "prio", "label": "Priorität", "channels": ["RL", "RR"]},
+            {"group": "main", "label": "Music", "channels": ["FL", "FR"]},
+            {"group": "prio", "label": "Priority", "channels": ["RL", "RR"]},
         ],
         "params": [
-            {"key": "thresh", "label": "Schwelle", "min": -60, "max": 0, "default": -35, "unit": "dB"},
-            {"key": "ratio", "label": "Stärke", "min": 1, "max": 20, "default": 8, "unit": ":1"},
-            {"key": "release", "label": "Rückkehr", "min": 50, "max": 3000, "default": 500, "unit": "ms"},
+            {"key": "thresh", "label": "Threshold", "min": -60, "max": 0, "default": -35, "unit": "dB"},
+            {"key": "ratio", "label": "Strength", "min": 1, "max": 20, "default": 8, "unit": ":1"},
+            {"key": "release", "label": "Release", "min": 50, "max": 3000, "default": 500, "unit": "ms"},
         ],
     },
 }
 
 
 def input_groups(kind: str) -> list[dict]:
-    """Eingänge eines Bausteins; Standard: ein Eingang ohne Gruppe."""
+    """Inputs of a block; default: one input without a group."""
     return TYPES[kind].get("inputs") or [{"group": None, "label": "", "channels": None}]
 
 
@@ -160,7 +160,7 @@ def node_names(fx_id: str) -> tuple[str, str]:
 
 
 def controls(kind: str, params: dict) -> list[tuple[str, float]]:
-    """Parameterwerte -> filter-chain-Steuerwerte ("node:Port", Wert)."""
+    """Parameter values -> filter-chain control values ("node:Port", value)."""
     if kind == "highpass":
         return [("hp:Freq", float(params["freq"]))]
     if kind == "eq":
@@ -170,7 +170,7 @@ def controls(kind: str, params: dict) -> list[tuple[str, float]]:
         return [("dl:Delay (s)", float(params["ms"]) / 1000.0)]
     if kind == "reverb":
         wet = float(params["mix"]) / 100.0
-        dry = 1.0 - 0.5 * wet            # bei 100 % noch etwas trocken, wirkt natürlicher
+        dry = 1.0 - 0.5 * wet            # keep some dry signal at 100 %, sounds more natural
         return [(f"mix{c}:Gain 1", dry) for c in "LR"] + [(f"mix{c}:Gain 2", wet) for c in "LR"]
     if kind == "denoise":
         return [("rn:VAD Threshold (%)", float(params["vad"])),
@@ -188,7 +188,7 @@ def controls(kind: str, params: dict) -> list[tuple[str, float]]:
     return []
 
 
-# ------------------------------------------------------------ Konfiguration
+# ------------------------------------------------------------ config
 
 def _ctrl(pairs: list[tuple[str, float]], node: str) -> str:
     items = [f'"{k.split(":", 1)[1]}" = {v:.6g}' for k, v in pairs if k.split(":", 1)[0] == node]
@@ -197,7 +197,7 @@ def _ctrl(pairs: list[tuple[str, float]], node: str) -> str:
 
 def _graph(kind: str, fx_id: str, params: dict) -> str:
     c = controls(kind, params)
-    if kind == "highpass":   # 1 Ein-/Ausgang -> PipeWire dupliziert pro Kanal
+    if kind == "highpass":   # 1 input/output -> PipeWire duplicates per channel
         return f"""{{ nodes = [ {{ type = builtin name = hp label = bq_highpass
                        control = {{ "Freq" = {params['freq']:.6g} "Q" = 0.707 }} }} ] }}"""
     if kind == "eq":
@@ -211,7 +211,7 @@ def _graph(kind: str, fx_id: str, params: dict) -> str:
         return f"""{{ nodes = [ {{ type = builtin name = dl label = delay
                        config = {{ "max-delay" = 2.1 }}
                        control = {{ "Delay (s)" = {float(params['ms']) / 1000:.6g} }} }} ] }}"""
-    if kind == "denoise":    # Mono-Plugin, PipeWire dupliziert pro Kanal
+    if kind == "denoise":    # mono plugin, PipeWire duplicates it per channel
         return (f'{{ nodes = [ {{ type = ladspa name = rn plugin = "{find_plugin(TYPES[kind]["plugin"])}" '
                 f'label = noise_suppressor_mono control = {_ctrl(c, "rn")} }} ] }}')
     if kind in ("compressor", "duck"):
@@ -219,7 +219,7 @@ def _graph(kind: str, fx_id: str, params: dict) -> str:
         name = "comp" if kind == "compressor" else "sc"
         label = LSP_URI + ("compressor_stereo" if kind == "compressor" else "sc_compressor_stereo")
         ctrl = _ctrl(c, name)[:-1]
-        if kind == "duck":                       # 2 = externer Sidechain (gemessen)
+        if kind == "duck":                       # 2 = external sidechain (measured)
             ctrl += '"Sidechain type" = 2 "Attack time (ms)" = 5 '
         ins = '"{0}:Input L" "{0}:Input R"'.format(name)
         if kind == "duck":
@@ -227,7 +227,7 @@ def _graph(kind: str, fx_id: str, params: dict) -> str:
         return (f'{{ nodes = [ {{ type = ladspa name = {name} plugin = "{lsp}" label = "{label}" '
                 f'control = {ctrl}}} }} ]\n inputs = [ {ins} ] '
                 f'outputs = [ "{name}:Output L" "{name}:Output R" ] }}')
-    if kind == "reverb":     # explizit L/R, damit der Hall stereo-breit klingt
+    if kind == "reverb":     # explicit L/R so the reverb sounds wide
         ir = ir_path(fx_id)
         nodes, links = [], []
         for ch, idx in (("L", 0), ("R", 1)):
@@ -267,7 +267,7 @@ def write_conf(fx: dict) -> Path:
     title = TYPES[kind]["title"]
     chans = [ch for g in input_groups(kind) for ch in (g["channels"] or ["FL", "FR"])]
     cap_fmt = f"audio.channels = {len(chans)} audio.position = [ {' '.join(chans)} ]"
-    text = f"""# erzeugt vom Node-Router – wird bei jedem Start neu geschrieben
+    text = f"""# generated by Node-Router – rewritten on every start
 context.properties = {{ log.level = 0 }}
 context.spa-libs = {{
     audio.convert.* = audioconvert/libspa-audioconvert
@@ -295,10 +295,10 @@ context.modules = [
 
 
 def make_ir(path: Path, decay: float, sr: int = 48000) -> None:
-    """Stereo-Impulsantwort: dekorrelierte, exponentiell abklingende Rauschfahne
-    (-60 dB nach `decay` s), leicht tiefpassgefiltert, Energie normiert."""
+    """Stereo impulse response: decorrelated, exponentially decaying noise tail
+    (-60 dB after `decay` s), slightly low-pass filtered, energy normalized."""
     n = max(1, int(sr * decay))
-    pre = int(sr * 0.012)                      # 12 ms Vorverzögerung
+    pre = int(sr * 0.012)                      # 12 ms pre-delay
     rng = random.Random(1234)
     chans = []
     for _ in range(2):
@@ -306,7 +306,7 @@ def make_ir(path: Path, decay: float, sr: int = 48000) -> None:
         for i in range(n):
             t = i / sr
             x = rng.uniform(-1, 1) * math.exp(-6.9 * t / decay)
-            k = 0.35 + 0.5 * min(1.0, t / decay)   # wird mit der Zeit dumpfer
+            k = 0.35 + 0.5 * min(1.0, t / decay)   # gets darker over time
             lp += (x - lp) * (1 - k)
             out.append(lp)
         energy = math.sqrt(sum(v * v for v in out)) or 1.0
@@ -318,14 +318,14 @@ def make_ir(path: Path, decay: float, sr: int = 48000) -> None:
     with wave.open(str(path), "wb") as w:
         w.setnchannels(2); w.setsampwidth(2); w.setframerate(sr)
         w.writeframes(frames)
-    # Hinweis: Lautstärke-Normierung über Energie -> Nassanteil ~ Trockensignal
+    # note: energy normalization -> wet level ~ dry level
 
 
-# --------------------------------------------------------------- Prozesse
+# --------------------------------------------------------------- processes
 
 def running_pid(fx_id: str) -> int | None:
-    """PID unseres Prozesses für diesen Baustein – nur wenn die Kommandozeile
-    wirklich unsere Konfig enthält (nie fremde pipewire-Prozesse anfassen)."""
+    """PID of our process for this block – only if its command line really
+    contains our config (never touch other pipewire processes)."""
     try:
         pid = int(pid_path(fx_id).read_text().strip())
         cmd = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
@@ -335,9 +335,9 @@ def running_pid(fx_id: str) -> int | None:
 
 
 def _spawn_env() -> dict:
-    """RNNoise braucht libatomic.so.1, die auf manchen Systemen fehlt. Nur dann
-    die mitgelieferte Kopie (plugins/libatomic.so.1) für den Effekt-Prozess
-    sichtbar machen – vorhandene System-Bibliotheken haben Vorrang."""
+    """RNNoise needs libatomic.so.1, which is missing on some systems. Only then
+    make the bundled copy (plugins/libatomic.so.1) visible to the effect
+    process – existing system libraries take precedence."""
     env = dict(os.environ)
     if ctypes.util.find_library("atomic") is None:
         dirs = [str(d) for d in (PLUGIN_DIR, BUNDLED_PLUGINS) if (d / "libatomic.so.1").is_file()]
@@ -351,7 +351,7 @@ def spawn(fx: dict) -> None:
     p = subprocess.Popen(["pipewire", "-c", str(conf)], stdin=subprocess.DEVNULL,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          env=_spawn_env(),
-                         start_new_session=True)   # überlebt das Beenden des Routers
+                         start_new_session=True)   # survives quitting the router
     pid_path(fx["id"]).write_text(str(p.pid))
 
 
@@ -365,7 +365,7 @@ def kill(fx_id: str, timeout: float = 1.5) -> None:
         end = time.time() + timeout
         while pid and time.time() < end:
             try:
-                os.waitpid(pid, os.WNOHANG)   # eigenes Kind -> Zombie vermeiden
+                os.waitpid(pid, os.WNOHANG)   # our own child -> avoid a zombie
             except ChildProcessError:
                 pass
             if not Path(f"/proc/{pid}").exists() or b"Z" in _state(pid):

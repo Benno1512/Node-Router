@@ -1,49 +1,55 @@
-# Praxistest mit Discord
+# Real-world test with Discord
 
-Die automatischen Tests (`tests/run_all.py`) arbeiten mit Testtönen und Rauschen und
-messen Pegel. Ob es in Discord mit echter Sprache gut klingt, kann nur ein Mensch prüfen.
-Diese Checkliste dauert etwa 15 Minuten. Am besten mit einer zweiten Person im
-Sprachkanal oder mit Discords **Mikrofontest** (Einstellungen → Sprache & Video →
-„Let's Check“).
+The automated tests (`tests/run_all.py`) work with test tones and noise and measure levels.
+Whether it sounds good in Discord with real speech is something only a person can judge.
+This checklist takes about 15 minutes.
 
-Vorbereitung: Router läuft, ein virtuelles Mikro „Discord Mix“ ist angelegt.
-In Discord: Einstellungen → Sprache & Video → **Eingabegerät: Discord Mix**.
-Zum Vergleich hilft es, Discords eigene Rauschunterdrückung (Krisp) und
-„Echo-Unterdrückung“ testweise **auszuschalten**.
+Ideally test with a second person in a voice channel. Alternatively, use Discord's **mic test**
+(Settings → Voice & Video → "Let's Check").
 
-## 1. Grundfunktion
-- [ ] „Discord Mix“ erscheint in Discord als Eingabegerät
-- [ ] Mikro → Discord Mix verbinden: Der Pegelbalken in Discord bewegt sich beim Sprechen
-- [ ] Gegenüber hört dich klar, ohne Knacken, Aussetzer oder Roboterstimme
-- [ ] Wire trennen: Gegenüber hört dich nicht mehr
+## Preparation
 
-## 2. Rauschunterdrückung
-- [ ] Mikro → Rauschunterdrückung → Discord Mix
-- [ ] Tastatur tippen / Lüfter ohne zu sprechen: kommt nicht (kaum) an
-- [ ] Sprache klingt natürlich, Wortanfänge und -enden werden nicht abgeschnitten
-      (sonst „Schwelle“ senken oder „Nachlauf“ erhöhen)
+- [ ] The router is running and a virtual mic "Discord Mix" exists.
+- [ ] In Discord: Settings → Voice & Video → **Input Device: Discord Mix**.
+- [ ] For comparison, it helps to **turn off** Discord's own noise suppression (Krisp) and
+      echo cancellation while testing.
 
-## 3. Kompressor
-- [ ] Rauschunterdrückung → Kompressor → Discord Mix (Kette)
-- [ ] Leise und laut sprechen/lachen: Lautstärke beim Gegenüber gleichmäßiger, kein Übersteuern
+## 1. Basics
+- [ ] "Discord Mix" shows up in Discord as an input device
+- [ ] Connect mic → Discord Mix: Discord's level meter moves when you speak
+- [ ] The other person hears you clearly, without crackling, dropouts or a robot voice
+- [ ] Remove the wire: the other person no longer hears you
 
-## 4. Musik mitschicken + Ducking
-- [ ] Video/Musik in Firefox starten; Firefox → Ducking (**Musik**) → Discord Mix
-- [ ] Mikro → Ducking (**Priorität**) **und** Mikro (bzw. Rauschunterdrückung) → Discord Mix
-- [ ] Gegenüber hört die Musik; sobald du sprichst, wird sie deutlich leiser
-- [ ] Nach dem Sprechen kommt die Musik sanft zurück (sonst „Rückkehr“ anpassen)
-- [ ] Du selbst hörst die Musik weiterhin normal über deine Lautsprecher/Kopfhörer
+## 2. Noise suppression
+- [ ] Mic → Noise suppression → Discord Mix
+- [ ] Typing on the keyboard or a fan without speaking: (almost) nothing gets through
+- [ ] Speech sounds natural, and the beginnings and ends of words are not cut off
+      (otherwise lower "Threshold" or raise "Hold")
 
-## 5. Alltag
-- [ ] Video pausieren und weiterspielen: Musik kommt wieder im Discord an
-- [ ] Firefox schließen und neu öffnen: Route wird automatisch wiederhergestellt
-- [ ] Router-Fenster schließen (Tray): Alles läuft weiter
-- [ ] Ein/Aus-Schalter: Aus → Gegenüber hört nichts mehr vom Mix; An → alles wieder da
-- [ ] Rechner neu starten (mit Autostart): Discord findet „Discord Mix“ wieder, Routen aktiv
+## 3. Compressor
+- [ ] Noise suppression → Compressor → Discord Mix (chain)
+- [ ] Speak or laugh quietly and loudly: the volume the other person hears is more even, with no clipping
 
-## 6. Latenz
-- [ ] Gegenüber empfindet keine merkliche Verzögerung (grob: < 100 ms zusätzlich).
-      Jeder Effekt-Baustein addiert etwas Latenz; RNNoise am meisten (ca. 10 ms).
+## 4. Sending music + ducking
+- [ ] Start a video or music in Firefox, then connect Firefox → Ducking (**Music**) → Discord Mix
+- [ ] Connect mic → Ducking (**Priority**), **and** mic (or noise suppression) → Discord Mix
+- [ ] The other person hears the music; as soon as you speak it gets clearly quieter
+- [ ] After you stop speaking the music comes back smoothly (otherwise adjust "Release")
+- [ ] You still hear the music normally on your own speakers or headphones
 
-Bitte Probleme mit kurzer Beschreibung festhalten (was verbunden war, was zu hören war) –
-am besten als Issue im Repository.
+## 5. Everyday use
+- [ ] Pause and resume the video: the music reaches Discord again
+- [ ] Close and reopen Firefox: the route is restored automatically
+- [ ] Close the router window (tray): everything keeps running
+- [ ] On/off switch: off → the other person hears nothing from the mix; on → everything is back
+- [ ] Reboot (with autostart): Discord finds "Discord Mix" again and the routes are active
+
+## 6. Latency
+- [ ] The other person notices no clear delay (roughly < 100 ms extra).
+      Every effect block adds some latency; RNNoise adds the most (about 10 ms).
+
+If something goes wrong, please note:
+- what was connected
+- what you heard
+
+Ideally, report it as an issue in the repository.

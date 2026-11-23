@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Startet das gebaute AppImage wie ein Nutzer (mit Test-Config in Temp-Ordnern) und
-prüft, dass es aus der Einzeldatei heraus mit PipeWire arbeitet: virtuelles Mikro
-(pactl), Effekt-Prozess (pipewire -c), Speicherorte, Icon, Einzelinstanz.
+"""Starts the built AppImage like a user would (with a test config in temp folders) and
+checks that it works with PipeWire from the single file: virtual mic
+(pactl), effect process (pipewire -c), storage locations, icon, single instance.
 
-    ./build_appimage.sh && ../.venv/bin/python tests/test_appimage.py
+    ./build_appimage.sh && .venv/bin/python tests/test_appimage.py
 """
 import glob, json, os, signal, subprocess, sys, time
 from pathlib import Path
@@ -14,7 +14,7 @@ import pw_backend as pw  # noqa: E402
 
 imgs = sorted(glob.glob(str(NR / "build" / "Node-Router-*-x86_64.AppImage")))
 if not imgs:
-    print("SKIP: kein AppImage gebaut (./build_appimage.sh)"); sys.exit(SKIP)
+    print("SKIP: no AppImage built (./build_appimage.sh)"); sys.exit(SKIP)
 IMG = imgs[-1]
 fails = 0
 def ok(n, c, i=""):
@@ -48,32 +48,32 @@ ok("--version", v.returncode == 0 and "Node-Router" in v.stdout, v.stdout.strip(
 t0 = time.time()
 p = subprocess.Popen([IMG, "--minimized"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 names = lambda: {n.name for n in pw.read_graph().nodes.values()}
-ok("virtuelles Mikro aus der Config angelegt (pactl aus dem Bundle)", until(lambda: MIC in names(), 25),
-   f"nach {time.time() - t0:.1f} s")
-ok("Effekt-Prozess läuft (pipewire -c aus dem Bundle)",
+ok("virtual mic from the config created (pactl from the bundle)", until(lambda: MIC in names(), 25),
+   f"after {time.time() - t0:.1f} s")
+ok("effect process running (pipewire -c from the bundle)",
    until(lambda: {f"diy_fx_{FXID}_in", f"diy_fx_{FXID}_out"} <= names(), 25))
-ok("Effekt-Dateien unter ~/.local/share/node-router/fx", (data_dir / "fx" / f"{FXID}.conf").exists())
-for suf, name in (("dn", "Rauschunterdrückung"), ("cp", "Kompressor"), ("dk", "Ducking")):
-    ok(f"{name} läuft mit mitgeliefertem Plugin", until(lambda s=suf: f"diy_fx_{FXID}{s}_in" in names(), 15))
+ok("effect files under ~/.local/share/node-router/fx", (data_dir / "fx" / f"{FXID}.conf").exists())
+for suf, name in (("dn", "Noise suppression"), ("cp", "Compressor"), ("dk", "Ducking")):
+    ok(f"{name} runs with the bundled plugin", until(lambda s=suf: f"diy_fx_{FXID}{s}_in" in names(), 15))
 conf = (data_dir / "fx" / f"{FXID}dn.conf").read_text() if (data_dir / "fx" / f"{FXID}dn.conf").exists() else ""
-ok("…Plugin dauerhaft unter ~/.local/share abgelegt (nicht im AppImage-Mount)",
+ok("…plugin stored permanently under ~/.local/share (not in the AppImage mount)",
    f"{data_dir}/plugins/librnnoise_ladspa.so" in conf and ".mount_" not in conf, [l.strip() for l in conf.splitlines() if "plugin =" in l][:1])
-ok("Icon dauerhaft nach ~/.local/share kopiert", (data_dir / "icon.svg").exists())
-ok("Config unter ~/.config/node-router gelesen", (cfg_dir / "config.json").exists())
+ok("icon copied permanently to ~/.local/share", (data_dir / "icon.svg").exists())
+ok("config read from ~/.config/node-router", (cfg_dir / "config.json").exists())
 s = subprocess.run([IMG], env=env, capture_output=True, text=True, timeout=60)
-ok("zweiter Start: läuft bereits", s.returncode == 0 and "läuft bereits" in s.stderr, s.stderr.strip()[-120:])
-ok("AppImage läuft weiter", p.poll() is None)
+ok("second start: already running", s.returncode == 0 and "already running" in s.stderr, s.stderr.strip()[-120:])
+ok("AppImage keeps running", p.poll() is None)
 
 p.send_signal(signal.SIGTERM)
 try: out = p.communicate(timeout=10)[0]
 except subprocess.TimeoutExpired: p.kill(); out = p.communicate()[0]
 bad = [l for l in out.splitlines() if "Traceback" in l or "Error" in l or "error while loading" in l]
-ok("keine Fehler in der Ausgabe", not bad, bad[:3])
-time.sleep(3)                                   # AppImage ist jetzt ausgehängt
+ok("no errors in the output", not bad, bad[:3])
+time.sleep(3)                                   # the AppImage is unmounted now
 alive = [s for s in ("", "dn", "cp", "dk") if f"diy_fx_{FXID}{s}_in" in names()]
-ok("Effekte laufen nach Beenden des AppImage weiter", len(alive) == 4, alive)
+ok("effects keep running after the AppImage quits", len(alive) == 4, alive)
 
-# aufräumen: Effekt-Prozess (läuft absichtlich weiter) + Test-Mikro
+# clean up: effect process (keeps running on purpose) + test mic
 for pid_f in (data_dir / "fx").glob("*.pid"):
     try: os.kill(int(pid_f.read_text()), signal.SIGTERM)
     except (ProcessLookupError, ValueError): pass

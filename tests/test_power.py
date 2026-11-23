@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Ein/Aus-Knopf. Test-Objekte only, temp config."""
+"""On/off button. Test objects only, temp config."""
 import json, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import NR, OUT, SKIP, finish, wav_file  # noqa: E402  (setzt auch sys.path)
+from _common import NR, OUT, SKIP, finish, wav_file  # noqa: E402  (also sets sys.path)
 sys.path.insert(0, str(NR))
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtTest import QTest
@@ -45,43 +45,43 @@ silent = subprocess.Popen(["pacat", "--playback", "--raw", "--format=s16le", "--
 time.sleep(1.5)
 w = m.MainWindow(); w.show(); w.resize(1100, 760); wait(2500); v = w.view
 w.add_effect("highpass", QPointF(v.grid_span()[0] + 150, 120))
-ok("Hochpass läuft", until(lambda: any(i.running for i in v.fx_items.values()), 6000))
+ok("high-pass running", until(lambda: any(i.running for i in v.fx_items.values()), 6000))
 hp = next(iter(v.fx_items.values()))
 item = lambda pred: next(i for i in v.node_items.values() if pred(i.node))
 w.connect_nodes(item(is_tone), hp); wait(600); w.connect_nodes(hp, item(is_mic)); wait(800)
 app_it = item(is_app)
 spk_wire = [x for x in v.wires if x.src is app_it and is_spk(x.dst.node)]
-ok("Test-App hängt am Lautsprecher (WirePlumber)", spk_wire)
+ok("test app is on the speaker (WirePlumber)", spk_wire)
 v.delete_wire(spk_wire[0]); wait(1000)
-ok("Ausgangslage: Route aktiv, App-Lautsprecher gesperrt",
+ok("initial state: route active, app→speaker blocked",
    links(is_tone, is_fx_in) and links(is_fx_out, is_mic) and not links(is_app, is_spk))
 
-# --- ausschalten über den Knopf
+# --- switch off with the button
 QTest.mouseClick(w.header.power_button, Qt.LeftButton); wait(2000)
-ok("Knopf zeigt „Deaktiviert“", w.header.power_button.isChecked() and "Deaktiviert" in w.header.power_button.text())
-ok("Routen getrennt", not links(is_tone, is_fx_in) and not links(is_fx_out, is_mic))
-ok("Effekt gestoppt", until(lambda: fxlib.running_pid(hp.fx["id"]) is None, 4000))
-ok("gesperrte App spielt wieder über Standard-Lautsprecher", len(links(is_app, is_spk)) == 2)
-ok("virtuelles Mikro bleibt bestehen", any(n.name == MIC for n in pw.read_graph().nodes.values()))
-ok("Bearbeiten gesperrt, Status zeigt deaktiviert", not v.isInteractive() and "deaktiviert" in w.header.status.text())
-ok("Zustand gespeichert", json.loads(m.CONFIG.read_text())["disabled"] is True)
+ok("button shows \"Disabled\"", w.header.power_button.isChecked() and "Disabled" in w.header.power_button.text())
+ok("routes disconnected", not links(is_tone, is_fx_in) and not links(is_fx_out, is_mic))
+ok("effect stopped", until(lambda: fxlib.running_pid(hp.fx["id"]) is None, 4000))
+ok("blocked app plays through the default speaker again", len(links(is_app, is_spk)) == 2)
+ok("virtual mic stays", any(n.name == MIC for n in pw.read_graph().nodes.values()))
+ok("editing locked, status shows disabled", not v.isInteractive() and "disabled" in w.header.status.text())
+ok("state saved", json.loads(m.CONFIG.read_text())["disabled"] is True)
 wait(2500)
-ok("bleibt aus (nichts wird neu verbunden/gestartet)", not links(is_tone, is_fx_in) and fxlib.running_pid(hp.fx["id"]) is None)
+ok("stays off (nothing reconnected/restarted)", not links(is_tone, is_fx_in) and fxlib.running_pid(hp.fx["id"]) is None)
 w.grab().save(str(OUT / "power_off.png"))
 
-# --- Neustart im deaktivierten Zustand
+# --- restart while disabled
 w.close(); wait(400)
 w = m.MainWindow(); w.show(); w.resize(1100, 760); wait(3000); v = w.view
-ok("Neustart: bleibt deaktiviert", w.header.power_button.isChecked() and not v.isInteractive()
+ok("restart: stays disabled", w.header.power_button.isChecked() and not v.isInteractive()
    and not links(is_tone, is_fx_in) and fxlib.running_pid(hp.fx["id"]) is None)
 
-# --- einschalten
+# --- switch on
 QTest.mouseClick(w.header.power_button, Qt.LeftButton); wait(500)
-ok("Knopf zeigt „Aktiv“", not w.header.power_button.isChecked() and "Aktiv" in w.header.power_button.text())
-ok("Effekt startet wieder", until(lambda: fxlib.running_pid(hp.fx["id"]) is not None and any(i.running for i in w.view.fx_items.values()), 8000))
-ok("Routen wiederhergestellt", until(lambda: links(is_tone, is_fx_in) and links(is_fx_out, is_mic), 6000))
-ok("Sperre greift wieder (App nicht am Lautsprecher)", until(lambda: not links(is_app, is_spk), 4000))
-ok("Bearbeiten wieder möglich", v.isInteractive() and json.loads(m.CONFIG.read_text())["disabled"] is False)
+ok("button shows \"Active\"", not w.header.power_button.isChecked() and "Active" in w.header.power_button.text())
+ok("effect starts again", until(lambda: fxlib.running_pid(hp.fx["id"]) is not None and any(i.running for i in w.view.fx_items.values()), 8000))
+ok("routes restored", until(lambda: links(is_tone, is_fx_in) and links(is_fx_out, is_mic), 6000))
+ok("block applies again (app not on the speaker)", until(lambda: not links(is_app, is_spk), 4000))
+ok("editing possible again", v.isInteractive() and json.loads(m.CONFIG.read_text())["disabled"] is False)
 
 for it in list(v.fx_items.values()): w.remove_effect(it)
 until(lambda: fxlib.running_pid(hp.fx["id"]) is None, 5000)

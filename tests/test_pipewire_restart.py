@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""ECHTER Neustart von PipeWire (pipewire, pipewire-pulse, wireplumber).
+"""REAL restart of PipeWire (pipewire, pipewire-pulse, wireplumber).
 
-Nicht Teil von run_all.py: unterbricht den Ton aller Programme kurz, und virtuelle
-Mikros/Effekte, die gerade kein laufender Router pflegt, verschwinden bis zum
-nächsten Router-Start. Nur manuell ausführen:
+Not part of run_all.py: briefly interrupts the sound of all programs, and virtual
+mics/effects that no running router is looking after disappear until the
+next router start. Run manually only:
 
-    ../.venv/bin/python tests/test_pipewire_restart.py --ja-wirklich
+    .venv/bin/python tests/test_pipewire_restart.py --yes-really
 """
 import json, math, struct, subprocess, sys, time, wave
 from pathlib import Path
@@ -16,7 +16,7 @@ from PySide6.QtCore import QPointF, QProcess  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 import main as m, pw_backend as pw, fx as fxlib  # noqa: E402
 
-if "--ja-wirklich" not in sys.argv:
+if "--yes-really" not in sys.argv:
     print(__doc__); sys.exit(2)
 
 MIC, TONE = "diy_selftest_pwr", "diy_selftest_tone"
@@ -62,20 +62,20 @@ is_tone = lambda n: n.app_name == TONE
 is_fx_in, is_fx_out = (lambda n: n.is_fx_in), (lambda n: n.is_fx_out)
 is_mic = lambda n: n.name == MIC
 
-# Aufbau: Testton -> Hochpass -> Test-Mikro
+# setup: test tone -> high-pass -> test mic
 p = tone(); time.sleep(1)
 w = m.MainWindow(); w.show(); wait(2500); v = w.view
 w.add_effect("highpass", QPointF(v.grid_span()[0] + 150, 120))
-ok("Aufbau: Mikro + Hochpass laufen", until(lambda: any(i.running for i in v.fx_items.values())
+ok("setup: mic + high-pass running", until(lambda: any(i.running for i in v.fx_items.values())
                                           and any(n.name == MIC for n in graph().nodes.values()), 8000) is not None)
 hp = next(iter(v.fx_items.values()))
 item = lambda pred: next(i for i in v.node_items.values() if pred(i.node))
 w.connect_nodes(item(is_tone), hp); wait(600); w.connect_nodes(hp, item(is_mic)); wait(1000)
-r0 = rms(); ok("Ton kommt vor dem Neustart an", r0 > 2000, f"RMS {r0:.0f}")
+r0 = rms(); ok("tone arrives before the restart", r0 > 2000, f"RMS {r0:.0f}")
 pid0 = fxlib.running_pid(hp.fx["id"])
 
-# ECHTER Neustart
-print("…starte pipewire, pipewire-pulse, wireplumber neu", flush=True)
+# REAL restart
+print("…restarting pipewire, pipewire-pulse, wireplumber", flush=True)
 t_restart = time.time()
 r = subprocess.run(["systemctl", "--user", "restart", "pipewire.service", "pipewire-pulse.service", "wireplumber.service"],
                    capture_output=True, text=True)
@@ -84,18 +84,18 @@ p.kill()
 
 t = until(lambda: w.mon.state() == QProcess.Running and w.graph.nodes and
           any(n.name == MIC for n in graph().nodes.values()), 20000)
-ok("virtuelles Mikro wieder da", t is not None, f"nach {t:.1f} s" if t else "")
+ok("virtual mic back", t is not None, f"after {t:.1f} s" if t else "")
 t = until(lambda: any(i.running for i in v.fx_items.values()) and fxlib.running_pid(hp.fx["id"]) not in (None, pid0), 25000)
-ok("Effekt neu gestartet (neuer Prozess)", t is not None, f"nach {t:.1f} s" if t else f"pid {fxlib.running_pid(hp.fx['id'])} (vorher {pid0})")
-ok("Überwachung läuft wieder", w.mon.state() == QProcess.Running)
+ok("effect restarted (new process)", t is not None, f"after {t:.1f} s" if t else f"pid {fxlib.running_pid(hp.fx['id'])} (before {pid0})")
+ok("monitor running again", w.mon.state() == QProcess.Running)
 t = until(lambda: linked(is_fx_out, is_mic), 10000)
-ok("Route Hochpass → Mikro wiederhergestellt", t is not None, f"nach {t:.1f} s" if t else "")
+ok("route high-pass → mic restored", t is not None, f"after {t:.1f} s" if t else "")
 p = tone()
 t = until(lambda: linked(is_tone, is_fx_in), 8000)
-ok("Testton (neu gestartet) wieder an den Hochpass", t is not None, f"nach {t:.1f} s" if t else "")
+ok("test tone (restarted) back at the high-pass", t is not None, f"after {t:.1f} s" if t else "")
 wait(800)
-r1 = rms(); ok("Ton kommt nach dem Neustart wieder an", r1 > 2000, f"RMS {r1:.0f}")
-print(f"   gesamt seit Neustart: {time.time() - t_restart:.1f} s", flush=True)
+r1 = rms(); ok("tone arrives again after the restart", r1 > 2000, f"RMS {r1:.0f}")
+print(f"   total since restart: {time.time() - t_restart:.1f} s", flush=True)
 w.grab().save(str(OUT / "after_pw_restart.png"))
 
 for it in list(v.fx_items.values()): w.remove_effect(it)

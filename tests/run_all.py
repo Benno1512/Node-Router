@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Alle Tests nacheinander ausführen.
+"""Run all tests one after another.
 
-    cd node_router && ../.venv/bin/python tests/run_all.py            # alle
-    cd node_router && ../.venv/bin/python tests/run_all.py fx ghost   # Auswahl (Teilname)
+    .venv/bin/python tests/run_all.py            # all
+    .venv/bin/python tests/run_all.py fx ghost   # selection (part of the name)
 
-Voraussetzungen: laufendes PipeWire + pipewire-pulse, grafische Sitzung (die
-Tests öffnen echte Fenster). Dauer insgesamt ca. 10 Minuten.
+Requirements: running PipeWire + pipewire-pulse, graphical session (the
+tests open real windows). Takes about 10 minutes in total.
 
-Der Router selbst darf dabei NICHT laufen: Ein offener Router merkt sich sonst
-alle Test-Objekte in seiner config.json und zeigt sie danach als Karten an.
+The router itself must NOT be running: an open router would otherwise remember
+all test objects in its config.json and show them as cards afterwards.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 NR = HERE.parent
 SKIP = 77
 
-TESTS = [  # Reihenfolge: schnell/grundlegend zuerst
+TESTS = [  # order: fast/basic first
     ("selftest", NR / "selftest.py", 90),
     ("deps", HERE / "test_deps.py", 90),
     ("menu", HERE / "test_menu.py", 90),
@@ -39,12 +39,12 @@ TESTS = [  # Reihenfolge: schnell/grundlegend zuerst
     ("background", HERE / "test_background.py", 120),
     ("fx", HERE / "test_fx.py", 300),
     ("fx_plugins", HERE / "test_fx_plugins.py", 300),
-    ("appimage", HERE / "test_appimage.py", 180),   # übersprungen ohne Build
+    ("appimage", HERE / "test_appimage.py", 180),   # skipped without a build
 ]
 
 
 def router_running() -> list[int]:
-    """PIDs laufender Router-Instanzen (python … main.py in diesem Ordner)."""
+    """PIDs of running router instances (python … main.py in this folder)."""
     pids = []
     for p in Path("/proc").iterdir():
         if not p.name.isdigit() or int(p.name) == os.getpid():
@@ -60,16 +60,16 @@ def router_running() -> list[int]:
 
 
 def cleanup() -> list[str]:
-    """Test-Reste nach Abbrüchen entfernen. Fasst nur Test-Objekte an:
-    Module diy_selftest_*, Test-Streams diy_selftest_*, Effekt-Prozesse, deren
-    ID nicht in der config.json des Nutzers steht."""
+    """Remove test leftovers after aborted runs. Only touches test objects:
+    modules diy_selftest_*, test streams diy_selftest_*, effect processes whose
+    ID is not in the user's config.json."""
     done = []
     r = subprocess.run(["pactl", "list", "short", "modules"], capture_output=True, text=True)
     for line in r.stdout.splitlines():
         parts = line.split("\t")
         if len(parts) >= 3 and "sink_name=diy_selftest_" in parts[2]:
             subprocess.run(["pactl", "unload-module", parts[0]], capture_output=True)
-            done.append(f"Modul {parts[0]}")
+            done.append(f"module {parts[0]}")
     for p in Path("/proc").iterdir():
         if not p.name.isdigit():
             continue
@@ -79,7 +79,7 @@ def cleanup() -> list[str]:
             continue
         if cmd.split(b"\0")[0].endswith((b"pw-play", b"pacat")) and b"diy_selftest_" in cmd:
             subprocess.run(["kill", p.name], capture_output=True)
-            done.append(f"Test-Stream {p.name}")
+            done.append(f"test stream {p.name}")
     sys.path.insert(0, str(NR))
     import fx as fxlib  # noqa: E402
     try:
@@ -90,17 +90,17 @@ def cleanup() -> list[str]:
         for conf in fxlib.FX_DIR.glob("*.conf"):
             if conf.stem not in user_ids:
                 fxlib.kill(conf.stem); fxlib.delete_files(conf.stem)
-                done.append(f"Effekt {conf.stem}")
+                done.append(f"effect {conf.stem}")
     return done
 
 
 def main() -> int:
     if pids := router_running():
-        print(f"Abbruch: Der Router läuft noch (PID {', '.join(map(str, pids))}). "
-              "Bitte zuerst schließen – sonst landen Test-Objekte in deiner config.json.")
+        print(f"Aborted: the router is still running (PID {', '.join(map(str, pids))}). "
+              "Close it first – otherwise test objects end up in your config.json.")
         return 2
     if subprocess.run(["pw-dump"], capture_output=True).returncode != 0:
-        print("Abbruch: PipeWire nicht erreichbar (pw-dump schlägt fehl).")
+        print("Aborted: PipeWire not reachable (pw-dump fails).")
         return 2
     wanted = sys.argv[1:]
     tests = [t for t in TESTS if not wanted or any(w in t[0] for w in wanted)]
@@ -113,27 +113,27 @@ def main() -> int:
                                capture_output=True, text=True, timeout=timeout)
             code, out = r.returncode, r.stdout + r.stderr
         except subprocess.TimeoutExpired as e:
-            code, out = -1, (e.stdout or b"").decode() + "\nZEITÜBERSCHREITUNG"
+            code, out = -1, (e.stdout or b"").decode() + "\nTIMEOUT"
         dt = time.time() - t0
-        if name == "selftest":           # selftest.py meldet Fehler im Log statt per Exit-Code
-            code = 1 if "FEHLER" in out else code
-        status = {0: "OK", SKIP: "ÜBERSPRUNGEN"}.get(code, "FEHLER")
+        if name == "selftest":           # selftest.py reports errors in its log, not via exit code
+            code = 1 if "ERROR" in out else code
+        status = {0: "OK", SKIP: "SKIPPED"}.get(code, "FAILED")
         print(f"{status:13} {dt:5.0f} s")
-        if status == "FEHLER":
+        if status == "FAILED":
             for line in out.splitlines():
-                if line.startswith(("FAIL", "FEHLER", "Traceback", "ZEIT")) or "Error" in line:
+                if line.startswith(("FAIL", "ERROR", "Traceback", "TIMEOUT")) or "Error" in line:
                     print("    " + line)
-        elif status == "ÜBERSPRUNGEN":
+        elif status == "SKIPPED":
             for line in out.splitlines():
                 if line.startswith("SKIP"):
                     print("    " + line)
         results.append(status)
         if leftovers := cleanup():
-            print("    aufgeräumt: " + ", ".join(leftovers))
+            print("    cleaned up: " + ", ".join(leftovers))
     ok = results.count("OK")
-    print(f"\n{ok}/{len(results)} OK, {results.count('ÜBERSPRUNGEN')} übersprungen, "
-          f"{results.count('FEHLER')} Fehler")
-    return 0 if "FEHLER" not in results else 1
+    print(f"\n{ok}/{len(results)} OK, {results.count('SKIPPED')} skipped, "
+          f"{results.count('FAILED')} failed")
+    return 0 if "FAILED" not in results else 1
 
 
 if __name__ == "__main__":

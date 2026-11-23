@@ -35,7 +35,7 @@ import fx as fxlib
 import paths
 import pw_backend as pw
 
-# DIY_ROUTER_CONFIG=<Datei> nutzt eine andere Config (z. B. für Tests oder ein zweites Profil)
+# DIY_ROUTER_CONFIG=<file> uses a different config (e.g. for tests or a second profile)
 CONFIG = paths.CONFIG
 __version__ = "0.1.3"
 APP_ID = "node-router"
@@ -50,8 +50,8 @@ def autostart_file() -> Path:
 
 
 def migrate_legacy_entries() -> None:
-    """Startmenü-/Autostart-Einträge aus der Zeit vor der Umbenennung
-    (diy-audio-router.desktop) durch neue ersetzen – Autostart bleibt an."""
+    """Replace menu/autostart entries from before the rename
+    (diy-audio-router.desktop) with new ones – autostart stays enabled."""
     data = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
     for old, new, minimized in ((autostart_file().with_name(f"{paths.LEGACY_ID}.desktop"), autostart_file(), True),
                                 (data / "applications" / f"{paths.LEGACY_ID}.desktop",
@@ -67,30 +67,30 @@ def migrate_legacy_entries() -> None:
 
 
 def desktop_entry(minimized: bool) -> str:
-    """Desktop-Eintrag (Startmenü/Autostart) für genau diese Installation."""
+    """Desktop entry (app menu/autostart) for exactly this installation."""
     exe = paths.launch_command(minimized)
     return ("[Desktop Entry]\nType=Application\nName=Node-Router\n"
-            "Comment=PipeWire-Patchbay mit virtuellen Mikrofonen und Effekten\n"
+            "Comment=PipeWire patchbay with virtual microphones and effects\n"
             f"Exec={exe}\nIcon={paths.icon_path()}\nTerminal=false\n"
             "Categories=AudioVideo;Audio;Mixer;\n"
             + ("X-GNOME-Autostart-enabled=true\n" if minimized else ""))
 
 NODE_W, NODE_H, PORT_R = 230, 82, 7
-MARGIN, TOP, ROW = 16, 44, 96          # Rand, Listenbeginn (unter Spaltentitel), Zeilenhöhe
-LEFT_X = MARGIN                          # rechte Spalte: RouterView.col_x()
-FX_W, FX_HEAD, FX_ROW = 214, 40, 26      # Effekt-Karte: Breite, Kopf, Reglerzeile
-FX_PAD = 12                              # Abstand Effekt-Karte zum Rand des Netzes
+MARGIN, TOP, ROW = 16, 44, 96          # margin, list start (below column titles), row height
+LEFT_X = MARGIN                          # right column: RouterView.col_x()
+FX_W, FX_HEAD, FX_ROW = 214, 40, 26      # effect card: width, header, slider row
+FX_PAD = 12                              # gap between effect card and mesh edge
 # ---------------------------------------------------------------- themes
 PALETTES: dict[str, dict[str, str]] = {
     "dark": {
-        # Routing-Fläche / Karten
+        # routing area / cards
         "bg": "#1e1f24", "grid": "#26282e", "node": "#2d3038", "node_ghost": "#272a31",
         "panel": "#191a1e", "border": "#454955", "divider": "#393c45",
         "text": "#e6e6e6", "sub": "#9aa0ac", "muted": "#5d626c",
         "src": "#4caf82", "app": "#5b9bd5", "sink": "#d58b4c", "virt": "#b07cd8", "fx": "#3cbfb0",
         "wire": "#c8c8c8", "sel": "#ffcc33", "ok": "#4caf82", "err": "#e05d5d",
         "track": "#1b1c20", "tick": "#5a5f6b", "knob": "#e6e6e6", "knob_ring": "#2d3038",
-        # Fenster / Widgets
+        # window / widgets
         "header": "#141518", "line": "#2a2c33", "btn_text": "#cfd3da",
         "btn_hover": "#24262c", "btn_hover_border": "#33363e", "btn_pressed": "#1c1d22",
         "menu_bg": "#1e1f24", "menu_border": "#33363e", "menu_sel": "#2d3038",
@@ -160,7 +160,7 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 
 
 def set_palette(name: str) -> str:
-    """Farben für Zeichencode (COL) umschalten, Stylesheet zurückgeben."""
+    """Switch colors used by painting code (COL), return the stylesheet."""
     global CURRENT_THEME
     name = name if name in PALETTES else "dark"
     CURRENT_THEME = name
@@ -169,14 +169,14 @@ def set_palette(name: str) -> str:
 
 
 def emph(c: QColor) -> QColor:
-    """Hervorhebung (Hover): im Dunkeln heller, im Hellen dunkler."""
+    """Hover emphasis: lighter in dark mode, darker in light mode."""
     return c.darker(125) if CURRENT_THEME == "light" else c.lighter(130)
 
 
 class MenuEntry(QWidget):
-    """Menüeintrag mit Titel + Beschreibung darunter (statt Tooltip: die
-    Qt-Tooltips im Menü blieben beim direkten Wechsel zwischen Einträgen
-    hängen bzw. wurden abgeschnitten)."""
+    """Menu entry with title + description below (instead of a tooltip: Qt
+    tooltips in menus got stuck or clipped when moving directly between
+    entries)."""
 
     def __init__(self, title: str, desc: str, action: QWidgetAction, menu: QMenu):
         super().__init__()
@@ -199,8 +199,8 @@ class MenuEntry(QWidget):
         e.accept()
 
     def mouseReleaseEvent(self, e):
-        # nur auslösen, wenn auch hier gedrückt wurde – sonst würde das Loslassen
-        # des Doppelklicks, der das Menü geöffnet hat, einen Eintrag auswählen
+        # only trigger if the press happened here too – otherwise releasing the
+        # double-click that opened the menu would pick an entry
         pressed, self._pressed = self._pressed, False
         if pressed and self.isEnabled() and self.rect().contains(e.position().toPoint()):
             self.menu.close()
@@ -208,7 +208,7 @@ class MenuEntry(QWidget):
 
 
 class Header(QFrame):
-    """Kopfleiste: Titel + Live-Status links, Aktionen rechts."""
+    """Header bar: title + live status on the left, actions on the right."""
 
     def __init__(self, win: "MainWindow"):
         super().__init__()
@@ -234,37 +234,37 @@ class Header(QFrame):
         self._power_text(win.cfg.disabled)
         lay.addWidget(power)
         lay.addSpacing(4)
-        refresh = QToolButton(text="⟳", toolTip="Aktualisieren (F5)")
+        refresh = QToolButton(text="⟳", toolTip="Refresh (F5)")
         refresh.setObjectName("Icon")
         refresh.clicked.connect(lambda: win.refresh(force=True))
-        more = QToolButton(text="⋯", toolTip="Weitere Aktionen")
+        more = QToolButton(text="⋯", toolTip="More actions")
         more.setObjectName("Icon")
         more.setPopupMode(QToolButton.InstantPopup)
         menu = QMenu(more)
-        design = menu.addMenu("Design")
+        design = menu.addMenu("Theme")
         group = QActionGroup(design); group.setExclusive(True)
         self.theme_actions = {}
-        for key, text in (("dark", "Dunkel"), ("light", "Hell"), ("system", "Wie System")):
+        for key, text in (("dark", "Dark"), ("light", "Light"), ("system", "Follow system")):
             a = design.addAction(text, lambda k=key: win.set_theme(k))
             a.setCheckable(True); group.addAction(a)
             self.theme_actions[key] = a
         self.theme_actions.get(win.cfg.theme, self.theme_actions["dark"]).setChecked(True)
         menu.addSeparator()
-        menu.addAction("Sortierung zurücksetzen", win.reset_layout)
-        self.hidden_menu = menu.addMenu("Ausgeblendet")
+        menu.addAction("Reset sorting", win.reset_layout)
+        self.hidden_menu = menu.addMenu("Hidden")
         self.hidden_menu.aboutToShow.connect(lambda: self._fill_hidden(win))
         menu.aboutToShow.connect(lambda: self.hidden_menu.setTitle(
-            f"Ausgeblendet ({len(win.cfg.ignored)})"))
+            f"Hidden ({len(win.cfg.ignored)})"))
         menu.addSeparator()
-        self.autostart_action = menu.addAction("Beim Anmelden starten")
+        self.autostart_action = menu.addAction("Start at login")
         self.autostart_action.setCheckable(True)
         self.autostart_action.setChecked(autostart_file().exists())
         self.autostart_action.toggled.connect(win.set_autostart)
-        menu.addAction("Config-Ordner öffnen", win.open_config_dir)
+        menu.addAction("Open config folder", win.open_config_dir)
         menu.addSeparator()
-        menu.addAction("Über Node-Router", win.show_about)
+        menu.addAction("About Node-Router", win.show_about)
         more.setMenu(menu)
-        add = QToolButton(text="＋  Virtuelles Mikrofon")
+        add = QToolButton(text="＋  Virtual microphone")
         add.setObjectName("Primary"); add.setCursor(Qt.PointingHandCursor)
         add.clicked.connect(win.add_virtual)
         for b in (refresh, more):
@@ -276,30 +276,30 @@ class Header(QFrame):
         self.set_status(None)
 
     def _power_text(self, disabled: bool):
-        self.power_button.setText("○  Deaktiviert" if disabled else "●  Aktiv")
+        self.power_button.setText("○  Disabled" if disabled else "●  Active")
         self.power_button.setToolTip(
-            "Router ist aus: eigene Verbindungen getrennt, Effekte gestoppt. Klicken zum Aktivieren."
-            if disabled else "Klicken, um den Router zu deaktivieren (Programm bleibt offen)")
+            "Router is off: its connections are removed, effects stopped. Click to enable."
+            if disabled else "Click to disable the router (the program stays open)")
 
     def _fill_hidden(self, win: "MainWindow"):
         m = self.hidden_menu
         m.clear()
         if not win.cfg.ignored:
-            a = m.addAction("Nichts ausgeblendet"); a.setEnabled(False)
+            a = m.addAction("Nothing hidden"); a.setEnabled(False)
             return
         for key, label in sorted(win.cfg.ignored.items(), key=lambda kv: kv[1].lower()):
-            m.addAction(f"{label}  –  wieder anzeigen",
+            m.addAction(f"{label}  –  show again",
                         lambda k=key: win.unignore_node(k))
         m.addSeparator()
-        m.addAction("Alle wieder anzeigen", lambda: [win.unignore_node(k) for k in list(win.cfg.ignored)])
+        m.addAction("Show all again", lambda: [win.unignore_node(k) for k in list(win.cfg.ignored)])
 
     def set_status(self, graph: "pw.Graph | None", ok: bool = True, ignored=(), disabled=False):
         if disabled and ok:
-            dot, text = COL["err"].name(), "Router deaktiviert  ·  eigene Verbindungen getrennt, Effekte gestoppt"
+            dot, text = COL["err"].name(), "Router disabled  ·  its connections removed, effects stopped"
         elif not ok:
-            dot, text = COL["err"].name(), "PipeWire nicht erreichbar"
+            dot, text = COL["err"].name(), "PipeWire not reachable"
         elif graph is None:
-            dot, text = COL["sub"].name(), "verbinde …"
+            dot, text = COL["sub"].name(), "connecting …"
         else:
             nodes = [n for n in graph.nodes.values() if n.key not in ignored]
             left = sum(1 for n in nodes if n.is_left)
@@ -310,8 +310,8 @@ class Header(QFrame):
             dot = COL["ok"].name()
             def n(k, one, many):
                 return f"{k} {one if k == 1 else many}"
-            text = (f"PipeWire verbunden  ·  {n(left, 'Quelle', 'Quellen')}  ·  "
-                    f"{n(right, 'Ziel', 'Ziele')}  ·  {n(links, 'Verbindung', 'Verbindungen')}")
+            text = (f"PipeWire connected  ·  {n(left, 'source', 'sources')}  ·  "
+                    f"{n(right, 'target', 'targets')}  ·  {n(links, 'connection', 'connections')}")
         self.status.setText(f'<span style="color:{dot}">●</span>&nbsp; {text}')
 
 
@@ -322,24 +322,23 @@ class Config:
     def __init__(self) -> None:
         self.virtual_mics: list[dict] = []     # {"name": node_name, "label": str}
         self.routes: list[list[str]] = []      # [src_key, dst_key] made by user
-        # [src_key, dst_key] vom Nutzer getrennt -> wird entfernt, falls
-        # WirePlumber sie (z.B. beim App-Neustart) wieder anlegt
+        # [src_key, dst_key] disconnected by the user -> removed again if
+        # WirePlumber re-creates it (e.g. when the app restarts)
         self.blocked: list[list[str]] = []
-        # Reihenfolge der beiden Listen (Node-Keys, oben -> unten). Enthält auch
-        # Keys gerade nicht vorhandener Nodes, damit eine App beim Neustart
-        # wieder an ihrem alten Platz erscheint.
+        # order of both lists (node keys, top -> bottom). Also contains keys of
+        # nodes that are currently absent, so an app reappears at its old place.
         self.order: dict[str, list[str]] = {"left": [], "right": []}
-        # Anzeige-Daten zuletzt gesehener Nodes (Key -> Name, Klasse, Seite), damit
-        # verschwundene Nodes als ausgegraute Karte stehen bleiben – auch nach Neustart
+        # display data of recently seen nodes (key -> name, class, side), so vanished
+        # nodes stay as greyed-out cards – also after a restart
         self.known: dict[str, dict] = {}
-        # ausgeblendete Nodes (Key -> Anzeigename): tauchen nie wieder auf,
-        # auch nicht, wenn die App erneut Ton abspielt (z.B. libcanberra)
+        # hidden nodes (key -> display name): never shown again,
+        # even when the app plays sound again (e.g. libcanberra)
         self.ignored: dict[str, str] = {}
         self.theme = "dark"                    # "dark" | "light" | "system"
-        # Effekt-Bausteine im Netz: {"id","type","params":{..},"x": 0..1 (relativ
-        # zur Netzbreite), "y": px}
+        # effect blocks in the mesh: {"id","type","params":{..},"x": 0..1 (relative
+        # to the mesh width), "y": px}
         self.effects: list[dict] = []
-        self.disabled = False                  # Ein/Aus-Knopf: alles deaktiviert
+        self.disabled = False                  # on/off button: everything disabled
         if CONFIG.exists():
             try:
                 d = json.loads(CONFIG.read_text())
@@ -354,7 +353,7 @@ class Config:
                 self.effects = [e for e in d.get("effects", []) if e.get("type") in fxlib.TYPES]
                 self.disabled = bool(d.get("disabled", False))
             except (json.JSONDecodeError, OSError) as e:
-                print(f"config.json ignoriert: {e}", file=sys.stderr)
+                print(f"config.json ignored: {e}", file=sys.stderr)
 
     def save(self) -> None:
         CONFIG.write_text(json.dumps({
@@ -370,7 +369,7 @@ class Config:
         }, indent=2))
 
     def forget(self, key: str) -> None:
-        """Key aus Listen + Anzeige-Daten entfernen (Routen bleiben)."""
+        """Remove key from the lists + display data (routes are kept)."""
         for side in ("left", "right"):
             self.order[side] = [k for k in self.order[side] if k != key]
         self.known.pop(key, None)
@@ -383,7 +382,7 @@ class PortItem(QGraphicsItem):
     def __init__(self, node_item, is_output: bool, pos: QPointF | None = None):
         super().__init__(node_item)
         self.node_item, self.is_output = node_item, is_output
-        self.group: str | None = None            # Eingangsgruppe (Ducking: main/prio)
+        self.group: str | None = None            # input group (ducking: main/prio)
         self.setPos(pos if pos is not None else QPointF(NODE_W if is_output else 0, NODE_H / 2))
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.CrossCursor)
@@ -416,8 +415,8 @@ class PortItem(QGraphicsItem):
 
 
 class VolumeItem(QGraphicsItem):
-    """Lautstärkeregler + Stumm-Knopf in einer Node-Karte (0-150 %)."""
-    Y, H = 54, 20                      # Zeile innerhalb der Karte
+    """Volume slider + mute button in a node card (0-150 %)."""
+    Y, H = 54, 20                      # row inside the card
 
     def __init__(self, node_item: "NodeItem"):
         super().__init__(node_item)
@@ -433,7 +432,7 @@ class VolumeItem(QGraphicsItem):
         self.setCursor(Qt.PointingHandCursor)
         self.setAcceptHoverEvents(True)
         self._hover = False
-        self.setToolTip("Lautstärke · Mausrad: ±5 % · Doppelklick: 100 %")
+        self.setToolTip("Volume · mouse wheel: ±5 % · double-click: 100 %")
 
     # geometry
     def boundingRect(self) -> QRectF:
@@ -452,7 +451,7 @@ class VolumeItem(QGraphicsItem):
     def _v_for(self, x: float) -> float:
         a, b = self.track()
         v = (x - a) / (b - a) * pw.MAX_VOLUME
-        if abs(v - 1.0) < 0.03:        # leicht an 100 % einrasten
+        if abs(v - 1.0) < 0.03:        # snap slightly to 100 %
             v = 1.0
         return min(max(v, 0.0), pw.MAX_VOLUME)
 
@@ -461,11 +460,11 @@ class VolumeItem(QGraphicsItem):
         n = self.node_item.node
         self.setVisible(n.volume is not None)
         if self.dragging:
-            return                      # beim Loslassen wird ohnehin neu abgeglichen
+            return                      # re-synced on release anyway
         wait = self._hold_until - time.monotonic()
         if wait > 0:
-            # eigene Änderung noch unterwegs -> danach erneut abgleichen, sonst
-            # bliebe eine in diesem Fenster eingetroffene externe Änderung unsichtbar
+            # own change still in flight -> re-sync afterwards, otherwise an external
+            # change arriving during this window would stay invisible
             QTimer.singleShot(int(wait * 1000) + 20, self.sync_from_node)
             return
         self.value = n.volume or 0.0
@@ -476,7 +475,7 @@ class VolumeItem(QGraphicsItem):
         p.setRenderHint(QPainter.Antialiasing)
         c = self.node_item.color
         cy = self.Y + self.H / 2
-        # Lautsprecher-Symbol
+        # speaker icon
         m = self.mute_rect()
         icon = COL["err"] if self.muted else (COL["text"] if self._hover else COL["sub"])
         sp = QPainterPath()
@@ -492,27 +491,27 @@ class VolumeItem(QGraphicsItem):
             p.drawArc(QRectF(m.left() + 6, cy - 4, 8, 8), -60 * 16, 120 * 16)
             if self.value > 0.5:
                 p.drawArc(QRectF(m.left() + 5, cy - 7, 13, 14), -60 * 16, 120 * 16)
-        # Spur
+        # track
         a, b = self.track()
         p.setPen(Qt.NoPen); p.setBrush(COL["track"])
         p.drawRoundedRect(QRectF(a, cy - 2, b - a, 4), 2, 2)
         kx = self._x_for(self.value)
         fill = COL["muted"] if self.muted else c
         p.setBrush(fill); p.drawRoundedRect(QRectF(a, cy - 2, kx - a, 4), 2, 2)
-        # 100-%-Marke
+        # 100 % mark
         tx = self._x_for(1.0)
         p.setPen(QPen(COL["tick"], 1))
         p.drawLine(QPointF(tx, cy - 5), QPointF(tx, cy + 5))
-        # Knopf
+        # knob
         p.setPen(QPen(COL["knob_ring"], 1.5)); p.setBrush(COL["knob"] if not self.muted else COL["muted"])
         p.drawEllipse(QPointF(kx, cy), 6 if (self._hover or self.dragging) else 5,
                       6 if (self._hover or self.dragging) else 5)
-        # Prozent
+        # percent
         f = QFont(); f.setPointSize(8); p.setFont(f)
         p.setPen(COL["err"] if self.muted else (c if self.value > 1.0 else COL["sub"]))
         p.drawText(QRectF(b + 6, self.Y, self.x0 + self.w - b - 6, self.H),
                    Qt.AlignRight | Qt.AlignVCenter,
-                   "stumm" if self.muted else f"{round(self.value * 100)} %")
+                   "muted" if self.muted else f"{round(self.value * 100)} %")
 
     # interaction
     def hoverEnterEvent(self, e):
@@ -561,7 +560,7 @@ class VolumeItem(QGraphicsItem):
         self.value = min(max(v, 0.0), pw.MAX_VOLUME)
         self._pending = self.value
         self.update()
-        if not self._sending:           # höchstens alle 60 ms an wpctl
+        if not self._sending:           # at most every 60 ms to wpctl
             self._sending = True
             QTimer.singleShot(60, self._flush)
 
@@ -573,7 +572,7 @@ class VolumeItem(QGraphicsItem):
 
 
 def ghost_node(key: str, meta: dict) -> pw.Node:
-    """Platzhalter-Node für eine gerade nicht vorhandene App/ein Gerät."""
+    """Placeholder node for an app/device that is currently absent."""
     return pw.Node(id=-(abs(hash(key)) % 10**9) - 1, name=meta.get("name", ""),
                    description=meta.get("description", ""),
                    media_class=meta.get("media_class", ""),
@@ -584,7 +583,7 @@ class NodeItem(QGraphicsObject):
     def __init__(self, node: pw.Node, left: bool, ghost: bool = False):
         super().__init__()
         self.node, self.left, self.ghost = node, left, ghost
-        # nur vertikal verschiebbar (Sortieren innerhalb der Liste), nicht auswählbar
+        # only movable vertically (sorting within the list), not selectable
         self.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)
         self.setCursor(Qt.OpenHandCursor)
         self.port = PortItem(self, is_output=left)
@@ -595,14 +594,14 @@ class NodeItem(QGraphicsObject):
         self.vol.sync_from_node()
         if ghost:
             self.setOpacity(0.42)
-            self.setToolTip("Gerade nicht aktiv (z.B. Video pausiert). Gespeicherte "
-                            "Verbindungen werden wiederhergestellt, sobald es zurück ist.")
+            self.setToolTip("Currently inactive (e.g. video paused). Saved connections "
+                            "are restored as soon as it is back.")
 
     @property
     def side(self) -> str:
         return "left" if self.left else "right"
 
-    # einheitliche Verbindungs-Schnittstelle (wie EffectItem)
+    # common connection interface (like EffectItem)
     @property
     def out_port(self) -> "PortItem":
         return self.port
@@ -677,7 +676,7 @@ class NodeItem(QGraphicsObject):
         f.setBold(False); f.setPointSize(8); p.setFont(f)
         p.setPen(COL["sub"])
         if self.ghost:
-            sub = "Pausiert / nicht aktiv"
+            sub = "Paused / inactive"
         else:
             ch = len(self.node.playable_out if self.left else self.node.in_ports)
             sub = f"{self.node.sublabel} · {ch}ch"
@@ -689,7 +688,7 @@ class NodeItem(QGraphicsObject):
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange:
-            # x fest auf die Spalte, y nur innerhalb der Liste
+            # x fixed to the column, y only within the list
             view = self.scene().views()[0] if self.scene() else None
             if not view:
                 return value
@@ -718,7 +717,7 @@ class NodeItem(QGraphicsObject):
 
 
 class ParamSlider(QGraphicsItem):
-    """Regler für einen Effekt-Parameter (Beschriftung · Spur · Wert)."""
+    """Slider for an effect parameter (label · track · value)."""
     LABEL_W, VAL_W, H = 58, 56, FX_ROW
 
     def __init__(self, card: "EffectItem", spec: dict, value: float, y: float):
@@ -732,12 +731,12 @@ class ParamSlider(QGraphicsItem):
         self._final = QTimer(singleShot=True, interval=500, timeout=self._commit)
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.PointingHandCursor)
-        tip = "Ziehen · Mausrad: fein · Doppelklick: Standardwert"
+        tip = "Drag · mouse wheel: fine · double-click: default"
         if spec.get("restart"):
-            tip += "\nÄnderung startet den Baustein kurz neu (Verbindungen bleiben)"
+            tip += "\nChanging this briefly restarts the block (connections are kept)"
         self.setToolTip(tip)
 
-    # Skala
+    # scale
     def track(self) -> tuple[float, float]:
         return 12 + self.LABEL_W, FX_W - 12 - self.VAL_W
 
@@ -785,7 +784,7 @@ class ParamSlider(QGraphicsItem):
         p.setPen(Qt.NoPen); p.setBrush(COL["track"])
         p.drawRoundedRect(QRectF(a, cy - 2, b - a, 4), 2, 2)
         kx = a + (b - a) * self._norm(self.value)
-        # bei ±dB von der Mitte aus füllen
+        # for ±dB fill from the center
         zx = a + (b - a) * self._norm(0.0) if self.spec["min"] < 0 < self.spec["max"] else a
         p.setBrush(COL["fx"])
         p.drawRoundedRect(QRectF(min(zx, kx), cy - 2, abs(kx - zx), 4), 2, 2)
@@ -797,7 +796,7 @@ class ParamSlider(QGraphicsItem):
         p.setPen(COL["text"] if self.dragging else COL["sub"])
         p.drawText(QRectF(b + 6, 0, FX_W - 12 - b - 6, self.H), Qt.AlignRight | Qt.AlignVCenter, self.text())
 
-    # Bedienung
+    # interaction
     def hoverEnterEvent(self, e):
         self._hover = True; self.update()
 
@@ -835,16 +834,16 @@ class ParamSlider(QGraphicsItem):
         else:
             v = self.value + ({"dB": 0.5, "ms": 10, "%": 5, "s": 0.1}.get(u, 1) * (1 if up else -1))
         self._set(self._round(v))
-        self._final.start()            # erst nach kurzer Pause speichern/neu starten
+        self._final.start()            # save/restart only after a short pause
         e.accept()
 
     def _set(self, v: float):
         self.value = v
         self.update()
         if self.spec.get("restart"):
-            return                     # wirkt erst beim Loslassen (Neustart)
+            return                     # takes effect on release (restart)
         self._pending = v
-        if not self._sending:          # höchstens alle 60 ms an pw-cli
+        if not self._sending:          # at most every 60 ms to pw-cli
             self._sending = True
             QTimer.singleShot(60, self._flush)
 
@@ -860,7 +859,7 @@ class ParamSlider(QGraphicsItem):
 
 
 class EffectItem(QGraphicsObject):
-    """Frei verschiebbarer Effekt-Baustein im Netz (Eingang links, Ausgang rechts)."""
+    """Freely movable effect block in the mesh (input left, output right)."""
 
     def __init__(self, fx: dict):
         super().__init__()
@@ -886,7 +885,7 @@ class EffectItem(QGraphicsObject):
             port = PortItem(self, False, QPointF(0, y))
             port.group = g["group"]
             if self.multi:
-                port.setToolTip(f"Eingang „{g['label']}“")
+                port.setToolTip(f"Input \"{g['label']}\"")
             self.in_ports[g["group"]] = port
         self.out_port = PortItem(self, True, QPointF(FX_W, FX_HEAD / 2))
         self.sliders = {}
@@ -920,7 +919,7 @@ class EffectItem(QGraphicsObject):
     def running(self) -> bool:
         return self.in_node is not None and self.out_node is not None and not self.restarting
 
-    # Verbindungs-Schnittstelle (wie NodeItem)
+    # connection interface (like NodeItem)
     def port_for(self, output: bool, near: QPointF | None = None) -> "PortItem":
         if output:
             return self.out_port
@@ -964,13 +963,13 @@ class EffectItem(QGraphicsObject):
         p.setPen(COL["sub"])
         view = self.scene().views()[0] if self.scene() else None
         if view and view.win.cfg.disabled:
-            state = "deaktiviert"
+            state = "disabled"
         else:
-            state = "Effekt" if self.running else ("startet neu …" if self.restarting else "startet …")
+            state = "Effect" if self.running else ("restarting …" if self.restarting else "starting …")
         p.drawText(QRectF(14, 22, FX_W - 28, 14), Qt.AlignLeft | Qt.AlignVCenter, state)
         p.setPen(QPen(COL["divider"], 1))
         p.drawLine(QPointF(12, FX_HEAD - 0.5), QPointF(FX_W - 12, FX_HEAD - 0.5))
-        if self.multi:                          # Beschriftung der Eingänge
+        if self.multi:                          # input labels
             f.setPointSize(8); p.setFont(f)
             for i, g in enumerate(self.groups):
                 y = FX_HEAD + 2 + i * self.IN_ROW
@@ -1019,9 +1018,9 @@ class WireItem(QGraphicsPathItem):
     def __init__(self, src, dst, planned: bool = False, group: str | None = None):
         super().__init__()
         self.src, self.dst, self.group = src, dst, group
-        self.planned = planned          # gespeicherte Route, (noch) kein PipeWire-Link
+        self.planned = planned          # saved route, no PipeWire link (yet)
         if planned:
-            self.setToolTip("Gespeicherte Verbindung – wird hergestellt, sobald beide Seiten aktiv sind")
+            self.setToolTip("Saved connection – created as soon as both sides are active")
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setZValue(0)
         self.setAcceptHoverEvents(True)
@@ -1072,7 +1071,7 @@ class RouterView(QGraphicsView):
         self.win = win
         self.setRenderHints(QPainter.Antialiasing)
         self.setDragMode(QGraphicsView.NoDrag)
-        # feste Ansicht: Szene = Viewport-Pixel, kein Zoom, nur senkrecht scrollen
+        # fixed view: scene = viewport pixels, no zoom, vertical scrolling only
         self.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -1082,7 +1081,7 @@ class RouterView(QGraphicsView):
         self.wires: list[WireItem] = []
         self._drag_from: PortItem | None = None
         self._temp: QGraphicsPathItem | None = None
-        # Netz muss mindestens eine Effekt-Karte aufnehmen können
+        # the mesh must fit at least one effect card
         self.setMinimumWidth(2 * (NODE_W + 2 * MARGIN) + FX_W + 2 * FX_PAD + 8)
 
     # ---------------- background grid
@@ -1108,7 +1107,7 @@ class RouterView(QGraphicsView):
         p.drawLine(gr, area.top(), gr, area.bottom())
 
     def drawForeground(self, p: QPainter, rect: QRectF):
-        if self.win.cfg.disabled:            # abgedunkelt + Hinweis
+        if self.win.cfg.disabled:            # dimmed + notice
             veil = QColor(COL["bg"]); veil.setAlpha(165)
             p.fillRect(rect, veil)
             vis = self.mapToScene(self.viewport().rect()).boundingRect()
@@ -1116,16 +1115,16 @@ class RouterView(QGraphicsView):
             box = QRectF(gl + 10, vis.center().y() - 40, gr - gl - 20, 80)
             f = QFont(); f.setPointSize(13); f.setBold(True); p.setFont(f)
             p.setPen(COL["err"])
-            p.drawText(QRectF(box.x(), box.y(), box.width(), 40), Qt.AlignCenter, "Router deaktiviert")
+            p.drawText(QRectF(box.x(), box.y(), box.width(), 40), Qt.AlignCenter, "Router disabled")
             f.setPointSize(9); f.setBold(False); p.setFont(f); p.setPen(COL["sub"])
             p.drawText(QRectF(box.x(), box.y() + 36, box.width(), 40), Qt.AlignHCenter | Qt.AlignTop | Qt.TextWordWrap,
-                       "Eigene Verbindungen getrennt, Effekte gestoppt.\nOben auf „Deaktiviert“ klicken zum Aktivieren.")
-        # Spaltentitel über den Listen
+                       "Its connections are removed, effects stopped.\nClick \"Disabled\" at the top to enable it again.")
+        # column titles above the lists
         f = QFont(); f.setPointSize(8); f.setBold(True)
         f.setLetterSpacing(QFont.AbsoluteSpacing, 1.2)
         p.setFont(f); p.setPen(COL["sub"])
-        for side, text in (("left", "QUELLEN · EINGÄNGE & APPS"),
-                           ("right", "ZIELE · AUSGÄNGE & MIKROS")):
+        for side, text in (("left", "SOURCES · INPUTS & APPS"),
+                           ("right", "TARGETS · OUTPUTS & MICS")):
             p.drawText(QRectF(self.col_x(side) + 2, 12, NODE_W, 20),
                        Qt.AlignLeft | Qt.AlignVCenter, text)
 
@@ -1134,7 +1133,7 @@ class RouterView(QGraphicsView):
         return LEFT_X if side == "left" else self.viewport().width() - MARGIN - NODE_W
 
     def grid_span(self) -> tuple[float, float]:
-        """Routing-Fläche zwischen den Listen (inkl. Ports)."""
+        """Routing area between the lists (incl. ports)."""
         return (LEFT_X + NODE_W + MARGIN, self.col_x("right") - MARGIN)
 
     def _update_scene_rect(self):
@@ -1202,7 +1201,7 @@ class RouterView(QGraphicsView):
     def sync(self, graph: pw.Graph, cfg: Config):
         wanted = {nid: n for nid, n in graph.nodes.items()
                   if (n.is_left or n.is_right) and n.key not in cfg.ignored}
-        # Platzhalter für bekannte, gerade fehlende Keys (z.B. pausiertes Video)
+        # placeholders for known keys that are currently missing (e.g. paused video)
         live_keys = {n.key for n in wanted.values()}
         ghost_side: dict[int, str] = {}
         for side in ("left", "right"):
@@ -1211,9 +1210,9 @@ class RouterView(QGraphicsView):
                 if (key in live_keys or not meta or meta.get("side") != side
                         or key in cfg.ignored
                         or str(meta.get("name", "")).startswith(pw.FX_PREFIX)):
-                    continue                 # Effekt-Nodes sind nie Listen-Einträge
+                    continue                 # effect nodes are never list entries
                 g = ghost_node(key, meta)
-                if g.key != key:             # unstimmiger Eintrag -> nicht anzeigen
+                if g.key != key:             # inconsistent entry -> do not show
                     continue
                 wanted[g.id] = g
                 ghost_side[g.id] = side
@@ -1233,7 +1232,7 @@ class RouterView(QGraphicsView):
             self.node_items[nid] = item
             self.scene_.addItem(item)
         changed = self._add_unknown_keys(cfg)
-        for it in self.node_items.values():     # Anzeige-Daten aktueller Nodes merken
+        for it in self.node_items.values():     # remember display data of current nodes
             if it.ghost:
                 continue
             n = it.node
@@ -1253,8 +1252,8 @@ class RouterView(QGraphicsView):
         return sum(1 for i in self.node_items.values() if i.side == side)
 
     def _add_unknown_keys(self, cfg: Config) -> bool:
-        """Neue Nodes ans Ende ihrer Liste hängen (Default-Sortierung:
-        links Apps vor Geräten, rechts Geräte vor virtuellen Mikros)."""
+        """Append new nodes to the end of their list (default sorting:
+        left apps before devices, right devices before virtual mics)."""
         changed = False
         defaults = {
             "left": lambda i: (not i.node.is_stream, i.node.label.lower()),
@@ -1287,7 +1286,7 @@ class RouterView(QGraphicsView):
         return min(max(round((item.pos().y() - TOP) / ROW), 0), n - 1)
 
     def preview_reorder(self, item: NodeItem):
-        """Während des Ziehens rücken die anderen Einträge zur Seite."""
+        """While dragging, the other entries make room."""
         others = [i for i in self._sorted_column(item.side) if i is not item]
         others.insert(self._target_row(item), item)
         x = self.col_x(item.side)
@@ -1300,8 +1299,8 @@ class RouterView(QGraphicsView):
         others = [i for i in self._sorted_column(side) if i is not item]
         row = self._target_row(item)
         others.insert(row, item)
-        # vollständige Liste neu aufbauen: sichtbare Keys in neuer Reihenfolge,
-        # nicht vorhandene (z.B. beendete Apps) behalten ihren relativen Platz
+        # rebuild the full list: visible keys in their new order,
+        # absent ones (e.g. closed apps) keep their relative place
         order = self.win.cfg.order[side]
         visible = []
         for it in others:
@@ -1310,7 +1309,7 @@ class RouterView(QGraphicsView):
         vis = set(visible)
         slots = iter(visible)
         new_order = [next(slots) if k in vis else k for k in order]
-        new_order += [k for k in slots]          # falls etwas noch nicht in order war
+        new_order += [k for k in slots]          # in case something was not in order yet
         self.win.cfg.order[side] = list(dict.fromkeys(new_order))
         self.win.cfg.save()
         self.layout_columns()
@@ -1320,7 +1319,7 @@ class RouterView(QGraphicsView):
             w.detach(); self.scene_.removeItem(w)
         self.wires.clear()
         items = list(self.node_items.values()) + list(self.fx_items.values())
-        # PipeWire-Node-ID -> Karte (Ausgangs- bzw. Eingangsseite)
+        # PipeWire node id -> card (output or input side)
         out_owner, in_owner = {}, {}
         for it in items:
             if (n := it.live_out()) is not None:
@@ -1337,8 +1336,8 @@ class RouterView(QGraphicsView):
                 drawn.add((id(si), id(di), grp))
                 w = WireItem(si, di, group=grp)
                 self.scene_.addItem(w); self.wires.append(w)
-        # gespeicherte Routen, bei denen eine Seite gerade nicht aktiv ist
-        # (ausgegraute Karte, Effekt startet noch): gestrichelt
+        # saved routes where one side is currently inactive
+        # (greyed-out card, effect still starting): dashed
         by_out, by_in = {}, {}
         for it in items:
             if (k := it.out_key()) is not None:
@@ -1384,7 +1383,7 @@ class RouterView(QGraphicsView):
                     target = it; break
                 while it is not None and not isinstance(it, (NodeItem, EffectItem)):
                     it = it.parentItem()
-                if it is not None:           # Loslassen auf der Karte: nächster passender Port
+                if it is not None:           # released on the card: nearest matching port
                     sp = self.mapToScene(e.position().toPoint())
                     target = (it.port_for(not start.is_output, sp) if isinstance(it, EffectItem)
                               else it.port_for(not start.is_output))
@@ -1398,9 +1397,9 @@ class RouterView(QGraphicsView):
 
     def wheelEvent(self, e):
         if isinstance(self.itemAt(e.position().toPoint()), (VolumeItem, ParamSlider)):
-            super().wheelEvent(e)       # -> Regler.wheelEvent
+            super().wheelEvent(e)       # -> slider.wheelEvent
             return
-        # kein Zoom; Mausrad scrollt nur senkrecht (falls Listen länger als Fenster)
+        # no zoom; the wheel only scrolls vertically (if lists are longer than the window)
         self.verticalScrollBar().setValue(
             self.verticalScrollBar().value() - e.angleDelta().y() // 2)
         e.accept()
@@ -1436,7 +1435,7 @@ class RouterView(QGraphicsView):
         if (e.button() == Qt.LeftButton and self.itemAt(e.position().toPoint()) is None
                 and self.in_mesh(e.position().toPoint())):
             m = QMenu(self)
-            t = m.addAction("Baustein hinzufügen"); t.setEnabled(False)
+            t = m.addAction("Add block"); t.setEnabled(False)
             m.addSeparator()
             self.add_menu(m, e.position().toPoint())
             m.exec(e.globalPosition().toPoint())
@@ -1449,34 +1448,34 @@ class RouterView(QGraphicsView):
             it = it.parentItem()
         m = QMenu(self)
         if self.win.cfg.disabled:
-            m.addAction("Router aktivieren", lambda: self.win.header.power_button.setChecked(False))
+            m.addAction("Enable router", lambda: self.win.header.power_button.setChecked(False))
             m.exec(e.globalPos())
             return
         if isinstance(it, EffectItem):
-            m.addAction("Auf Standardwerte zurücksetzen", lambda: self.win.reset_effect(it))
-            m.addAction("Alle Verbindungen trennen",
+            m.addAction("Reset to defaults", lambda: self.win.reset_effect(it))
+            m.addAction("Disconnect all",
                         lambda: [self.delete_wire(w) for w in list(it.wires)])
             m.addSeparator()
-            m.addAction("Baustein entfernen", lambda: self.win.remove_effect(it))
+            m.addAction("Remove block", lambda: self.win.remove_effect(it))
         elif isinstance(it, WireItem):
-            m.addAction("Verbindung trennen", lambda: self.delete_wire(it))
+            m.addAction("Disconnect", lambda: self.delete_wire(it))
         elif isinstance(it, NodeItem) and it.ghost:
-            m.addAction("Aus Liste entfernen", lambda: self.win.forget_node(it.node.key))
-            m.addAction("Ignorieren (nie mehr anzeigen)", lambda: self.win.ignore_node(it))
+            m.addAction("Remove from list", lambda: self.win.forget_node(it.node.key))
+            m.addAction("Ignore (never show again)", lambda: self.win.ignore_node(it))
         elif isinstance(it, NodeItem):
             n = it.node
             if n.is_virtual_mic:
-                m.addAction("Umbenennen…", lambda: self.win.rename_virtual(n))
-                m.addAction("Virtuelles Mikro löschen", lambda: self.win.remove_virtual(n))
-            m.addAction("Alle Verbindungen trennen",
+                m.addAction("Rename…", lambda: self.win.rename_virtual(n))
+                m.addAction("Delete virtual mic", lambda: self.win.remove_virtual(n))
+            m.addAction("Disconnect all",
                         lambda: [self.delete_wire(w) for w in list(it.wires)])
-            if not n.is_virtual_mic:     # eigene Mikros löscht man, statt sie zu verstecken
+            if not n.is_virtual_mic:     # own mics are deleted rather than hidden
                 m.addSeparator()
-                m.addAction("Ignorieren (nie mehr anzeigen)", lambda: self.win.ignore_node(it))
+                m.addAction("Ignore (never show again)", lambda: self.win.ignore_node(it))
         else:
             if self.in_mesh(e.pos()):
-                self.add_menu(m.addMenu("Baustein hinzufügen"), e.pos())
-            m.addAction("Virtuelles Mikrofon hinzufügen…", self.win.add_virtual)
+                self.add_menu(m.addMenu("Add block"), e.pos())
+            m.addAction("Add virtual microphone…", self.win.add_virtual)
         m.exec(e.globalPos())
 
 
@@ -1488,34 +1487,34 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Node-Router")
         self.setWindowIcon(QIcon(str(ICON)))
-        self._quitting = False                   # True: wirklich beenden (nicht nur ins Tray)
-        self._shutting = False                   # Monitor nicht mehr neu starten
-        self._vm_tried: dict[str, float] = {}    # virtuelle Mikros: letzter Anlege-Versuch
+        self._quitting = False                   # True: really quit (not just to the tray)
+        self._shutting = False                   # do not restart the monitor anymore
+        self._vm_tried: dict[str, float] = {}    # virtual mics: last creation attempt
         self.resize(1000, 700)
         self.cfg = Config()
         self.graph = pw.Graph({}, [])
         self._sig = None
-        self.restarting: set[str] = set()       # Effekt-IDs, die gerade neu starten
-        self._deactivate_pending = False         # wird nach Config-Laden gesetzt
-        self._spawned: dict[str, float] = {}     # Effekt-ID -> Zeitpunkt des Starts
+        self.restarting: set[str] = set()       # effect ids currently restarting
+        self._deactivate_pending = False         # set after loading the config
+        self._spawned: dict[str, float] = {}     # effect id -> start time
         self.view = RouterView(self)
         self.setCentralWidget(self.view)
         self._deactivate_pending = self.cfg.disabled
         self.view.setInteractive(not self.cfg.disabled)
 
         self.apply_theme()
-        # "Wie System": KDE/GNOME-Umschaltung live übernehmen
+        # "Follow system": apply KDE/GNOME switching live
         QGuiApplication.styleHints().colorSchemeChanged.connect(
             lambda *_: self.cfg.theme == "system" and self.apply_theme())
         self.header = Header(self)
         self.setMenuWidget(self.header)
-        self.addAction(QAction("Aktualisieren", self, shortcut="F5",
+        self.addAction(QAction("Refresh", self, shortcut="F5",
                                triggered=lambda: self.refresh(force=True)))
         self.view.setFrameShape(QFrame.NoFrame)
         self.statusBar().setSizeGripEnabled(False)
         self.statusBar().showMessage(
-            "Port → Port ziehen verbindet · Doppelklick ins Netz: Baustein hinzufügen · "
-            "Wire anklicken + Entf trennt")
+            "Drag port → port to connect · double-click the mesh: add block · "
+            "click a wire + Del to disconnect")
 
         for vm in self.cfg.virtual_mics:          # restore virtual devices
             try:
@@ -1526,14 +1525,14 @@ class MainWindow(QMainWindow):
         self.proc = QProcess(self)
         self.proc.finished.connect(self._dump_done)
         self._pending = False
-        # Fallback-Poll; eigentlich ausgelöst wird über pw-dump --monitor
+        # fallback poll; normally triggered by pw-dump --monitor
         self.timer = QTimer(self, interval=1000, timeout=self.refresh)
         self.timer.start()
-        # Ereignisgesteuert: jede Graph-Änderung -> nach 50 ms (gebündelt) neu lesen.
-        # Wichtig für blockierte Routen: WP-Link wird so nach ~0.1 s statt ≤1 s entfernt.
+        # event driven: every graph change -> re-read after 50 ms (debounced).
+        # Important for blocked routes: the WP link is removed after ~0.1 s instead of ≤1 s.
         self.debounce = QTimer(self, singleShot=True, interval=50, timeout=self.refresh)
         self._mon_buf = ""
-        self._mon_types: dict[int, str] = {}      # id -> Typ (Entfernungen kommen ohne Typ)
+        self._mon_types: dict[int, str] = {}      # id -> type (removals arrive without a type)
         self.mon = QProcess(self)
         self.mon.readyReadStandardOutput.connect(self._mon_event)
         self.mon.finished.connect(self._mon_finished)
@@ -1541,17 +1540,17 @@ class MainWindow(QMainWindow):
         self.tray = self._make_tray() if tray and QSystemTrayIcon.isSystemTrayAvailable() else None
         self._tray_hint_shown = False
         self.refresh(force=True)
-        if check_system:                         # fehlt PipeWire & Co.? -> Hinweis mit Befehl
+        if check_system:                         # PipeWire & co. missing? -> notice with command
             QTimer.singleShot(300, self.check_system)
 
     def check_system(self) -> list[str]:
         probs = deps.problems()
         if probs:
-            box = QMessageBox(QMessageBox.Warning, "Node-Router – es fehlt etwas",
+            box = QMessageBox(QMessageBox.Warning, "Node-Router – something is missing",
                               deps.help_text(probs), parent=self)
             cmd = deps.install_command()
             if cmd:
-                copy = box.addButton("Befehl kopieren", QMessageBox.ActionRole)
+                copy = box.addButton("Copy command", QMessageBox.ActionRole)
                 copy.clicked.disconnect()
                 copy.clicked.connect(lambda: QApplication.clipboard().setText(
                     f"{cmd} && {deps.SERVICES}"))
@@ -1559,22 +1558,22 @@ class MainWindow(QMainWindow):
             box.setTextInteractionFlags(Qt.TextSelectableByMouse)
             box.open()
             self._deps_box = box
-            self.statusBar().showMessage("Es fehlen Systempakete – siehe Hinweis")
+            self.statusBar().showMessage("System packages are missing – see the notice")
         return probs
 
-    # ---------------- Hintergrundbetrieb
+    # ---------------- background operation
     def _make_tray(self) -> QSystemTrayIcon:
         t = QSystemTrayIcon(QIcon(str(ICON)), self)
         t.setToolTip("Node-Router")
         m = QMenu(self)
-        m.addAction("Fenster öffnen", self.show_window)
+        m.addAction("Open window", self.show_window)
         m.addSeparator()
-        self.tray_active = m.addAction("Router aktiv")
+        self.tray_active = m.addAction("Router active")
         self.tray_active.setCheckable(True)
         self.tray_active.setChecked(not self.cfg.disabled)
         self.tray_active.toggled.connect(lambda on: self.set_router_disabled(not on))
         m.addSeparator()
-        m.addAction("Beenden", self.quit_app)
+        m.addAction("Quit", self.quit_app)
         t.setContextMenu(m)
         t.activated.connect(lambda r: self.toggle_window()
                             if r == QSystemTrayIcon.ActivationReason.Trigger else None)
@@ -1603,22 +1602,22 @@ class MainWindow(QMainWindow):
         else:
             f.unlink(missing_ok=True)
 
-    # ---------------- PipeWire-Neustart
+    # ---------------- PipeWire restart
     def _start_mon(self):
         self._mon_buf = ""
         self._mon_types.clear()
         self.mon.start("pw-dump", ["--monitor", "--no-colors"])
 
     def _mon_finished(self, *_):
-        """pw-dump --monitor endet, wenn PipeWire neu startet/abstürzt -> nach
-        kurzer Pause neu starten und vollständig neu einlesen."""
+        """pw-dump --monitor ends when PipeWire restarts/crashes -> restart it
+        after a short pause and re-read everything."""
         if self._shutting:
             return
         QTimer.singleShot(1000, lambda: (not self._shutting) and (self._start_mon(), self.refresh(force=True)))
 
     def _ensure_virtual_mics(self, g: pw.Graph):
-        """Virtuelle Mikros neu anlegen, wenn sie fehlen (z. B. nach Neustart von
-        PipeWire/pipewire-pulse) – auch im deaktivierten Zustand."""
+        """Re-create virtual mics when they are missing (e.g. after a restart of
+        PipeWire/pipewire-pulse) – also while disabled."""
         names = {n.name for n in g.nodes.values()}
         now = time.monotonic()
         for vm in self.cfg.virtual_mics:
@@ -1628,15 +1627,15 @@ class MainWindow(QMainWindow):
             try:
                 pw.create_virtual_mic(vm["label"], vm["name"])
             except RuntimeError as e:
-                print(f"virtuelles Mikro {vm['name']}: {e}", file=sys.stderr)
+                print(f"virtual mic {vm['name']}: {e}", file=sys.stderr)
 
     _MON_RELEVANT = ("PipeWire:Interface:Node", "PipeWire:Interface:Port",
                      "PipeWire:Interface:Link")
 
     def _mon_event(self):
-        """pw-dump --monitor schreibt pro Änderung ein JSON-Array. Nur Node/Port/
-        Link-Änderungen lösen ein Neulesen aus - Client-Ereignisse nicht, sonst
-        triggert jedes eigene pw-dump (= neuer Client) das nächste."""
+        """pw-dump --monitor writes one JSON array per change. Only node/port/link
+        changes trigger a re-read – client events do not, otherwise every own
+        pw-dump (= new client) would trigger the next one."""
         self._mon_buf += bytes(self.mon.readAllStandardOutput()).decode("utf-8", "replace")
         dec, relevant = json.JSONDecoder(), False
         while True:
@@ -1646,11 +1645,11 @@ class MainWindow(QMainWindow):
             try:
                 objs, end = dec.raw_decode(s)
             except json.JSONDecodeError:
-                self._mon_buf = s; break          # Block noch unvollständig
+                self._mon_buf = s; break          # block not complete yet
             self._mon_buf = s[end:]
             for o in objs if isinstance(objs, list) else []:
                 oid, t = o.get("id"), o.get("type")
-                if o.get("info") is None and not t:          # entfernt
+                if o.get("info") is None and not t:          # removed
                     t = self._mon_types.pop(oid, "")
                 elif t:
                     self._mon_types[oid] = t
@@ -1660,18 +1659,18 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e):
         if self.tray is not None and not self._quitting:
-            # Fenster schließen = in den Hintergrund; Routen werden weiter gepflegt
+            # closing the window = background; routes keep being maintained
             e.ignore()
             self.hide()
             if not self._tray_hint_shown:
                 self._tray_hint_shown = True
-                self.tray.showMessage("Node-Router läuft weiter",
-                                      "Über das Symbol in der Taskleiste öffnen oder beenden.",
+                self.tray.showMessage("Node-Router keeps running",
+                                      "Open or quit it via the icon in the system tray.",
                                       QIcon(str(ICON)), 4000)
             return
         if self.tray is not None:
             self.tray.hide()
-        # nichts mehr tun, sobald das Fenster zu ist (Effekt-Prozesse laufen weiter)
+        # do nothing anymore once the window is closed (effect processes keep running)
         self._shutting = True
         self.timer.stop(); self.debounce.stop()
         self.proc.finished.disconnect(self._dump_done)
@@ -1685,7 +1684,7 @@ class MainWindow(QMainWindow):
         if self.proc.state() == QProcess.NotRunning:
             self.proc.start("pw-dump", [])
         else:
-            self._pending = True                  # Änderung während laufendem Dump
+            self._pending = True                  # change during a running dump
 
     def _dump_done(self, code, _status):
         if self._pending:
@@ -1698,8 +1697,7 @@ class MainWindow(QMainWindow):
         try:
             g = pw.parse_dump(raw)
         except json.JSONDecodeError:
-            # pw-dump liefert kaputtes JSON, wenn während des Dumps Objekte
-            # verschwinden (z.B. App beendet) -> kurz danach erneut versuchen
+            # genuinely broken pw-dump output -> try again shortly
             self._bad_dumps = getattr(self, "_bad_dumps", 0) + 1
             if self._bad_dumps <= 5:
                 QTimer.singleShot(150, self.refresh)
@@ -1709,8 +1707,8 @@ class MainWindow(QMainWindow):
         self.header.set_status(g, ignored=self.cfg.ignored, disabled=self.cfg.disabled)
         self._ensure_virtual_mics(g)
         if self.cfg.disabled:
-            # nichts durchsetzen/wiederherstellen; beim Start im deaktivierten
-            # Zustand einmal aufräumen (Effekte könnten noch laufen)
+            # enforce/restore nothing; when starting in the disabled state
+            # clean up once (effects might still be running)
             if self._deactivate_pending:
                 self._deactivate_pending = False
                 self._deactivate()
@@ -1720,9 +1718,9 @@ class MainWindow(QMainWindow):
             removed = self._enforce_blocked()
             self._restore_routes()
         if removed:
-            # Graph ist jetzt veraltet -> nicht anzeigen, nächster Poll (≤1 s) liest neu.
-            # Kein sofortiges refresh(): würde bei dauerhaft fehlschlagendem
-            # pw-link -d eine Endlosschleife aus pw-dump-Aufrufen erzeugen.
+            # the graph is stale now -> do not show it, the next poll (≤1 s) re-reads.
+            # No immediate refresh(): with a permanently failing pw-link -d this
+            # would create an endless loop of pw-dump calls.
             self._sig = None
             return
         sig = g.signature()
@@ -1784,9 +1782,9 @@ class MainWindow(QMainWindow):
 
     # ---------------- actions
     def connect_nodes(self, src, dst, group: str | None = None):
-        """src: Karte mit Ausgang (Liste links oder Effekt), dst: mit Eingang.
-        Ist eine Seite gerade nicht aktiv (ausgegraut, Effekt startet), wird nur
-        die Route gespeichert – der Link folgt, sobald beide da sind."""
+        """src: card with an output (left list or effect), dst: with an input.
+        If one side is currently inactive (greyed out, effect starting), only the
+        route is saved – the link follows as soon as both are there."""
         sn, dn = src.live_out(), dst.live_in()
         if sn is not None and dn is not None:
             errs = pw.connect(self.graph, sn.id, dn.id, dst.channels_for(group))
@@ -1812,7 +1810,7 @@ class MainWindow(QMainWindow):
         self.cfg.save()
         self.refresh(force=True)
 
-    # ---------------- Ein/Aus
+    # ---------------- on/off
     def set_router_disabled(self, disabled: bool):
         if disabled == self.cfg.disabled:
             return
@@ -1827,15 +1825,15 @@ class MainWindow(QMainWindow):
         if disabled:
             self._deactivate()
         else:
-            self._spawned.clear()                # Effekte sofort wieder starten
+            self._spawned.clear()                # restart effects right away
         self.header.set_status(self.graph if self.graph.nodes else None,
                                ignored=self.cfg.ignored, disabled=disabled)
         self.view.resetCachedContent(); self.view.scene_.update(); self.view.viewport().update()
         self.refresh(force=True)
 
     def _deactivate(self):
-        """Eigene Routen trennen, Effekte stoppen, gesperrte Standard-Ausgabe
-        (App -> Standard-Lautsprecher) wieder verbinden. Virtuelle Mikros bleiben."""
+        """Disconnect own routes, stop effects, reconnect blocked default output
+        (app -> default speaker). Virtual mics stay."""
         g = self.graph
         by_key = self._nodes_by_key()
         linked = self._linked()
@@ -1849,7 +1847,7 @@ class MainWindow(QMainWindow):
         if default:
             for sk, dk in self.cfg.blocked:
                 if not sk.startswith("app:") or dk != f"dev:{default}":
-                    continue                     # nur das, was WirePlumber selbst täte
+                    continue                     # only what WirePlumber itself would do
                 for s in by_key.get(sk, []):
                     for d in by_key.get(dk, []):
                         if s.is_left and not self._is_linked(linked, s.id, d.id, None):
@@ -1859,26 +1857,26 @@ class MainWindow(QMainWindow):
 
     # ---------------- effects
     def _ensure_effects(self, g: pw.Graph):
-        """Fehlende Effekt-Prozesse starten (beim ersten Start, nach Neustart des
-        Rechners, falls einer abgestürzt ist). Laufende werden wiederverwendet."""
+        """Start missing effect processes (first start, after a reboot, if one
+        crashed). Running ones are reused."""
         names = {n.name for n in g.nodes.values() if n.is_effect}
         now = time.monotonic()
         for fx in self.cfg.effects:
             fid = fx["id"]
             if fid in self.restarting or all(n in names for n in fxlib.node_names(fid)):
                 continue
-            if now - self._spawned.get(fid, -1e9) < 5:     # startet gerade
+            if now - self._spawned.get(fid, -1e9) < 5:     # currently starting
                 continue
             if fxlib.running_pid(fid):
                 if now - self._spawned.get(fid, -1e9) < 15:
                     continue
-                fxlib.kill(fid)                            # hängt -> neu starten
+                fxlib.kill(fid)                            # stuck -> restart
             self._spawned[fid] = now
             self._bg(fxlib.spawn, dict(fx, params=dict(fx["params"])))
 
     def _bg(self, fn, *args, done=None):
-        """Langsame Arbeit (Impulsantwort erzeugen, Prozess beenden/starten) im
-        Hintergrund; Qt-Objekte werden dort nicht angefasst."""
+        """Slow work (generate impulse response, stop/start a process) in the
+        background; Qt objects are not touched there."""
         def run():
             try:
                 fn(*args)
@@ -1906,7 +1904,7 @@ class MainWindow(QMainWindow):
         self.cfg.routes = [r for r in self.cfg.routes if not keys & set(r)]
         self.cfg.blocked = [r for r in self.cfg.blocked if not keys & set(r)]
         self.cfg.save()
-        self.restarting.add(fid)                     # nicht wieder starten
+        self.restarting.add(fid)                     # do not start again
         def done():
             self.restarting.discard(fid)
         self._bg(lambda: (fxlib.kill(fid), fxlib.delete_files(fid)), done=done)
@@ -1956,14 +1954,14 @@ class MainWindow(QMainWindow):
         self.cfg.save()
 
     def add_virtual(self):
-        label, ok = QInputDialog.getText(self, "Virtuelles Mikrofon",
-                                         "Name (z.B. 'Discord Mix'):")
+        label, ok = QInputDialog.getText(self, "Virtual microphone",
+                                         "Name (e.g. 'Discord Mix'):")
         if not ok or not label.strip():
             return
         label = label.strip()
         name = pw.slug(label)
         if any(v["name"] == name for v in self.cfg.virtual_mics):
-            self.error(f"'{label}' existiert bereits."); return
+            self.error(f"'{label}' already exists."); return
         try:
             pw.create_virtual_mic(label, name)
         except RuntimeError as e:
@@ -1973,7 +1971,7 @@ class MainWindow(QMainWindow):
         self.refresh(force=True)
 
     def rename_virtual(self, n: pw.Node):
-        label, ok = QInputDialog.getText(self, "Umbenennen", "Neuer Name:", text=n.label)
+        label, ok = QInputDialog.getText(self, "Rename", "New name:", text=n.label)
         if not ok or not label.strip():
             return
         # description is fixed at module load -> recreate, keep node.name (routes keep working)
@@ -1989,7 +1987,7 @@ class MainWindow(QMainWindow):
         self.refresh(force=True)
 
     def remove_virtual(self, n: pw.Node):
-        if QMessageBox.question(self, "Löschen", f"'{n.label}' löschen?") != QMessageBox.Yes:
+        if QMessageBox.question(self, "Delete", f"Delete '{n.label}'?") != QMessageBox.Yes:
             return
         pw.remove_virtual_mic(n.name)
         self.cfg.virtual_mics = [v for v in self.cfg.virtual_mics if v["name"] != n.name]
@@ -2000,15 +1998,15 @@ class MainWindow(QMainWindow):
         self.refresh(force=True)
 
     def forget_node(self, key: str):
-        """Ausgegraute Karte entfernen. Gespeicherte Routen bleiben erhalten und
-        greifen wieder, falls die App/das Gerät zurückkommt."""
+        """Remove a greyed-out card. Saved routes are kept and apply again if the
+        app/device comes back."""
         self.cfg.forget(key)
         self.cfg.save()
         self.refresh(force=True)
 
     def ignore_node(self, item: "NodeItem"):
-        """Node dauerhaft ausblenden. Verbindungen/Routen bleiben unverändert;
-        rückgängig über ⋯ → Ausgeblendet."""
+        """Hide a node permanently. Connections/routes stay unchanged;
+        undo via ⋯ → Hidden."""
         key = item.node.key
         self.cfg.ignored[key] = item.node.label or key
         self.cfg.forget(key)
@@ -2037,7 +2035,7 @@ class MainWindow(QMainWindow):
         return "light" if scheme == Qt.ColorScheme.Light else "dark"
 
     def apply_theme(self):
-        # App-weit, damit auch Tooltips (eigene Fenster) den Stil bekommen
+        # application wide, so tooltips (separate windows) get the style too
         QApplication.instance().setStyleSheet(set_palette(self.resolved_theme()))
         self.view.setBackgroundBrush(COL["bg"])
         self.view.resetCachedContent()
@@ -2054,13 +2052,13 @@ class MainWindow(QMainWindow):
 
     def show_about(self):
         QMessageBox.about(
-            self, "Über Node-Router",
+            self, "About Node-Router",
             f"<b>Node-Router</b> {__version__}<br><br>"
-            "PipeWire-Patchbay mit virtuellen Mikrofonen und Effekt-Bausteinen.<br><br>"
+            "PipeWire patchbay with virtual microphones and effect blocks.<br><br>"
             f'<a href="{REPO_URL}">{REPO_URL}</a><br><br>'
-            "Lizenz: GPL-3.0-or-later – ohne jede Gewährleistung.<br>"
-            "Effekte nutzen PipeWire filter-chain, LSP-Plugins und RNNoise "
-            "(werman/noise-suppression-for-voice), die separat installiert werden.")
+            "License: GPL-3.0-or-later – without any warranty.<br>"
+            "Effects use PipeWire filter-chain, LSP Plugins and RNNoise "
+            "(werman/noise-suppression-for-voice), bundled under their own licenses.")
 
     def open_config_dir(self):
         from PySide6.QtCore import QUrl
@@ -2075,33 +2073,33 @@ def main() -> int:
     if "--version" in sys.argv[1:]:
         print(f"Node-Router {__version__}")
         return 0
-    paths.clean_host_env()                        # Kindprozesse: System-Umgebung
+    paths.clean_host_env()                        # child processes: system environment
     CONFIG.parent.mkdir(parents=True, exist_ok=True)
-    paths.icon_path()                             # gebündelt: Icon dauerhaft ablegen (Desktop-Einträge)
-    paths.install_bundled_plugins()               # gebündelt: Plugins dauerhaft ablegen (laufende Effekte)
-    migrate_legacy_entries()                      # alte „DIY Audio Router“-Einträge ersetzen
+    paths.icon_path()                             # bundled: store the icon permanently (desktop entries)
+    paths.install_bundled_plugins()               # bundled: store plugins permanently (running effects)
+    migrate_legacy_entries()                      # replace old "DIY Audio Router" entries
     minimized = "--minimized" in sys.argv[1:]
     app = QApplication(sys.argv)
     app.setApplicationName("Node-Router")
     app.setDesktopFileName(APP_ID)
     app.setWindowIcon(QIcon(str(ICON)))
 
-    # Nur eine Instanz: läuft schon eine, bringt ein zweiter Start nur deren
-    # Fenster nach vorn (beim Autostart mit --minimized: gar nichts) und endet.
+    # single instance: if one is running, a second start only raises its
+    # window (with --minimized from autostart: nothing at all) and exits.
     name = f"{APP_ID}-{os.getuid()}"
     sock = QLocalSocket()
     sock.connectToServer(name)
     if sock.waitForConnected(500):
         sock.write(b"noop" if minimized else b"show")
         sock.flush(); sock.waitForBytesWritten(500); sock.disconnectFromServer()
-        print("Node-Router läuft bereits.", file=sys.stderr)
+        print("Node-Router is already running.", file=sys.stderr)
         return 0
-    QLocalServer.removeServer(name)               # verwaistes Socket nach Absturz
+    QLocalServer.removeServer(name)               # orphaned socket after a crash
     server = QLocalServer()
     server.listen(name)
 
     tray = QSystemTrayIcon.isSystemTrayAvailable()
-    app.setQuitOnLastWindowClosed(not tray)       # mit Tray: Schließen = Hintergrund
+    app.setQuitOnLastWindowClosed(not tray)       # with tray: closing = background
     w = MainWindow(tray=tray, check_system=True)
 
     def on_connect():

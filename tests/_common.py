@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Gemeinsame Hilfen für die Tests.
+"""Shared helpers for the tests.
 
-Die Tests öffnen echte Fenster und legen echte PipeWire-Objekte an
-(virtuelle Test-Mikros `diy_selftest_*`, stumme Test-Streams, Effekt-Prozesse).
-Sie benutzen eine eigene Config im Temp-Ordner – nie die config.json des Nutzers –
-und spielen nichts über Lautsprecher ab (Test-Streams mit node.autoconnect=false
-bzw. Stille aus /dev/zero).
+The tests open real windows and create real PipeWire objects
+(virtual test mics `diy_selftest_*`, silent test streams, effect processes).
+They use their own config in a temp folder – never the user's config.json –
+and play nothing through the speakers (test streams with node.autoconnect=false
+or silence from /dev/zero).
 """
 from __future__ import annotations
 
@@ -19,17 +19,17 @@ import tempfile
 import wave
 from pathlib import Path
 
-NR = Path(__file__).resolve().parent.parent              # node_router/
+NR = Path(__file__).resolve().parent.parent              # repository root
 OUT = Path(os.environ.get("DIY_TEST_OUT", Path(tempfile.gettempdir()) / "diy_router_tests"))
 OUT.mkdir(parents=True, exist_ok=True)
 if str(NR) not in sys.path:
     sys.path.insert(0, str(NR))
 
-SKIP = 77                                                # Exit-Code „übersprungen“
+SKIP = 77                                                # exit code "skipped"
 
 
 def wav_file(name: str) -> Path:
-    """Testsignale (48 kHz, Stereo) einmalig im Temp-Ordner erzeugen."""
+    """Generate the test signals (48 kHz, stereo) once in the temp folder."""
     f = OUT / name
     if f.exists():
         return f

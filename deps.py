@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 benborofn-lgtm – Node-Router
-"""Systemvoraussetzungen prüfen und den passenden Installationsbefehl nennen.
+"""Check system requirements and name the matching install command.
 
-Mitgeliefert werden Python/Qt (AppImage) und die Effekt-Plugins (plugins/).
-Vom System kommen müssen PipeWire, pipewire-pulse, WirePlumber und deren
-Kommandozeilen-Werkzeuge – das prüft diese Datei (gleiche Paketlisten wie
-install-deps.sh). Getestet ist nur Ubuntu 24.04; die anderen Paketnamen
-entsprechen den Paketquellen der jeweiligen Distribution.
+Bundled are Python/Qt (AppImage) and the effect plugins (plugins/). PipeWire,
+pipewire-pulse, WirePlumber and their command line tools must come from the
+system – this file checks them (same package lists as install-deps.sh). Only
+Ubuntu 24.04 is tested; the other package names follow the official
+repositories of the respective distribution.
 """
 from __future__ import annotations
 
@@ -63,34 +63,34 @@ def install_command() -> str | None:
 
 
 def problems() -> list[str]:
-    """Liste lesbarer Probleme; leer = alles da."""
-    out = [f"Programm „{t}“ fehlt" for t in TOOLS if shutil.which(t) is None]
+    """List of readable problems; empty = everything present."""
+    out = [f"Program \"{t}\" is missing" for t in TOOLS if shutil.which(t) is None]
     if shutil.which("pactl"):
         try:
             info = subprocess.run(["pactl", "info"], capture_output=True, text=True, timeout=5).stdout
         except (OSError, subprocess.TimeoutExpired):
             info = ""
         if "PipeWire" not in info:
-            out.append("Der Sound-Server ist nicht PipeWire (pipewire-pulse läuft nicht – "
-                       "evtl. noch PulseAudio aktiv)")
+            out.append("The sound server is not PipeWire (pipewire-pulse is not running – "
+                       "maybe PulseAudio is still active)")
     if shutil.which("pw-dump"):
         try:
             ok = subprocess.run(["pw-dump"], capture_output=True, timeout=5).returncode == 0
         except (OSError, subprocess.TimeoutExpired):
             ok = False
         if not ok:
-            out.append("PipeWire ist nicht erreichbar (Dienst läuft nicht)")
+            out.append("PipeWire is not reachable (service not running)")
     return out
 
 
 def help_text(probs: list[str]) -> str:
     cmd = install_command()
-    lines = ["Es fehlt etwas, damit der Node-Router arbeiten kann:", ""]
+    lines = ["Node-Router needs something that is missing:", ""]
     lines += [f"  • {p}" for p in probs]
-    lines += ["", "Im Terminal installieren:" if cmd else
-              "Bitte PipeWire, pipewire-pulse, WirePlumber und pactl über die Paketverwaltung installieren.", ""]
+    lines += ["", "Install in a terminal:" if cmd else
+              "Please install PipeWire, pipewire-pulse, WirePlumber and pactl with your package manager.", ""]
     if cmd:
-        lines += [f"  {cmd}", "", "und den Sound-Server einschalten:", f"  {SERVICES}"]
-    lines += ["", "Danach abmelden und wieder anmelden (oder neu starten).",
-              "Alternativ erledigt das Skript install-deps.sh aus dem Repository alles in einem Schritt."]
+        lines += [f"  {cmd}", "", "and enable the sound server:", f"  {SERVICES}"]
+    lines += ["", "Then log out and back in (or reboot).",
+              "Alternatively the script install-deps.sh from the repository does all of this in one step."]
     return "\n".join(lines)

@@ -1,79 +1,96 @@
 # Changelog
 
-Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
-[Semantic Versioning](https://semver.org/lang/de/).
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Changed
+- **Everything is in English now**: user interface, messages, scripts, tests and documentation
+- README with a screenshot
 
 ## [0.1.3] – 2026-11-23
 
-### Geändert
-- **Neuer Name: Node-Router** (vorher „DIY Audio Router“). Fenster, Tray, Startmenü,
-  AppImage-Datei (`Node-Router-<version>-x86_64.AppImage`), Ordner beim AppImage
-  (`~/.config/node-router`, `~/.local/share/node-router`)
-- Alte Startmenü-/Autostart-Einträge und AppImage-Ordner werden automatisch übernommen
-- Unverändert: interne PipeWire-Namen (`diy_…`) der virtuellen Mikros und Effekte,
-  damit bestehende Einstellungen weiter funktionieren
+### Changed
+- **New name: Node-Router** (previously "DIY Audio Router"). This applies to:
+  - the window, tray and app menu entry
+  - the AppImage file (`Node-Router-<version>-x86_64.AppImage`)
+  - the AppImage folders (`~/.config/node-router`, `~/.local/share/node-router`)
+- Old app menu and autostart entries and AppImage folders are taken over automatically
+- Unchanged: the internal PipeWire names (`diy_…`) of virtual mics and effects, so
+  existing settings keep working
 
 ## [0.1.2] – 2026-11-23
 
-### Neu
-- **Effekt-Plugins mitgeliefert** (in `plugins/` und im AppImage): RNNoise (Rauschunterdrückung)
-  und LSP (Kompressor, Ducking) – keine Zusatzinstallation mehr nötig; inkl. `libatomic`
-  als Rückfall für Systeme ohne diese Bibliothek. Lizenzen und Herkunft: `plugins/README.md`
-- **`install-deps.sh`**: installiert fehlende Systempakete (PipeWire, pipewire-pulse,
-  WirePlumber, pactl) für Ubuntu/Debian/Mint, Fedora, Arch/Manjaro, openSUSE
-- **Startprüfung**: fehlt etwas, zeigt die App beim Start den passenden Befehl
-  (mit „Befehl kopieren“)
+### Added
+- **Bundled effect plugins** (in `plugins/` and in the AppImage), so nothing extra has to be
+  installed:
+  - RNNoise (noise suppression)
+  - LSP (compressor, ducking)
+  - `libatomic` as a fallback for systems without that library
 
-### Geändert
-- `install.sh --with-rnnoise` ist nicht mehr nötig (Option wird ignoriert)
+  Licenses and origin: `plugins/README.md`
+- **`install-deps.sh`**: installs missing system packages (PipeWire, pipewire-pulse,
+  WirePlumber, pactl) for Ubuntu/Debian/Mint, Fedora, Arch/Manjaro and openSUSE
+- **Startup check**: if something is missing, the app shows the matching command at startup
+  (with "Copy command")
+
+### Changed
+- `install.sh --with-rnnoise` is no longer needed (the option is ignored)
 
 ## [0.1.1] – 2026-11-23
 
-### Neu
-- **AppImage**: eine einzelne startbare Datei (`DIY-Audio-Router-0.1.1-x86_64.AppImage`)
-  mit Python, PySide6 und Qt – herunterladen, ausführbar machen, starten
-- `build_appimage.sh` zum Selbstbauen, `tests/test_appimage.py`
+### Added
+- **AppImage**: a single runnable file (`DIY-Audio-Router-0.1.1-x86_64.AppImage`) with Python,
+  PySide6 and Qt. Download it, make it executable and start it.
+- `build_appimage.sh` for building it yourself, and `tests/test_appimage.py`
 
-### Geändert
-- Als AppImage liegen Config und Effekt-Dateien in `~/.config/diy-audio-router/` bzw.
-  `~/.local/share/diy-audio-router/` (aus dem Quellcode gestartet: unverändert neben dem Programm)
-- System-Programme (pw-link, pactl, pipewire …) werden aus dem AppImage mit der
-  System-Umgebung gestartet, nicht mit den Bibliotheken des Bundles
-- Autostart-/Startmenü-Einträge zeigen beim AppImage auf die AppImage-Datei
+### Changed
+- As an AppImage, config and effect files live in `~/.config/diy-audio-router/` and
+  `~/.local/share/diy-audio-router/`. When started from source they stay next to the program.
+- From the AppImage, system programs (pw-link, pactl, pipewire …) are started with the system
+  environment, not with the bundle's libraries
+- With the AppImage, autostart and app menu entries point to the AppImage file
 
 ## [0.1.0] – 2026-11-22
 
-Erste Version.
+First version.
 
 ### Routing
-- Zwei feste Listen: Quellen (Eingabegeräte, App-Streams) links, Ziele (Ausgabegeräte,
-  virtuelle Mikrofone) rechts; Verbindungen per Drag & Drop als direkte `pw-link`-Links
-- Routen, Reihenfolge und Einstellungen in `config.json`; Routen werden wiederhergestellt,
-  wenn eine App neu startet oder pausiert und weiterspielt
-- Pausierte Apps bleiben als ausgegraute Karte stehen, gespeicherte Routen gestrichelt
-- Getrennte WirePlumber-Verbindungen bleiben getrennt (blockierte Routen)
-- Ignorieren-Liste für Apps/Geräte, die nie angezeigt werden sollen (z. B. Systemklänge)
-- Virtuelle Mikrofone (`Audio/Source/Virtual`) für Discord & Co.
-- Lautstärke und Stumm pro Gerät/App (0–150 %)
+- Two fixed lists:
+  - sources (input devices, app streams) on the left
+  - targets (output devices, virtual microphones) on the right
 
-### Effekt-Bausteine (PipeWire filter-chain)
-- Hochpass, Equalizer (3 Bänder), Delay, Hall
-- Rauschunterdrückung (RNNoise), Kompressor, Ducking mit Musik- und Prioritätseingang
-  (LSP-Plugins)
-- Frei im Netz verschiebbar, Regler wirken live, laufen weiter, wenn der Router geschlossen ist
+  Connections are made by drag & drop as direct `pw-link` links.
+- Routes, order and settings are kept in `config.json`. Routes are restored when an app
+  restarts, or pauses and plays again.
+- Paused apps stay as a greyed-out card, with saved routes shown dashed
+- Removed WirePlumber connections stay removed (blocked routes)
+- Ignore list for apps and devices that should never be shown (system sounds, for example)
+- Virtual microphones (`Audio/Source/Virtual`) for Discord and similar apps
+- Volume and mute per device or app (0–150 %)
 
-### Bedienung und Betrieb
-- Ein/Aus-Schalter: trennt alle eigenen Verbindungen und stoppt Effekte, Programm bleibt offen
-- Design Dunkel/Hell/Wie System
-- Tray-Symbol, Hintergrundbetrieb, Autostart (minimiert), nur eine Instanz
-- Erkennt Neustarts von PipeWire und stellt virtuelle Mikros, Effekte und Routen wieder her
-- `install.sh` (venv, Startmenü-Eintrag, optional Autostart und RNNoise-Download)
-- Automatische Tests (`tests/run_all.py`) und manueller PipeWire-Neustart-Test
+### Effect blocks (PipeWire filter-chain)
+- High-pass, equalizer (3 bands), delay, reverb
+- Noise suppression (RNNoise), compressor, ducking with a music and a priority input
+  (LSP plugins)
+- Blocks can be moved freely in the mesh, sliders work live, and blocks keep running when the
+  router is closed
 
-### Bekannte Grenzen
-- Nur getestet mit Ubuntu 24.04, PipeWire 1.0.5, WirePlumber 0.4.17
-- Noch nicht mit Discord und echter Sprache getestet (siehe `TESTING.md`)
+### Usage and operation
+- On/off switch: removes all of the router's own connections and stops effects, while the program
+  stays open
+- Theme: dark, light or follow system
+- Tray icon, background operation, autostart (minimized), single instance
+- Detects PipeWire restarts and restores virtual mics, effects and routes
+- `install.sh` (venv, app menu entry, optional autostart and RNNoise download)
+- Automated tests (`tests/run_all.py`) and a manual PipeWire restart test
 
+### Known limitations
+- Only tested on Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17
+- Not yet tested with Discord and real speech (see `TESTING.md`)
+
+[Unreleased]: https://github.com/benborofn-lgtm/Node-Router/compare/v0.1.3...HEAD
 [0.1.3]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.3
 [0.1.2]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.2
 [0.1.1]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.1
