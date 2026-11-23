@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.4] – 2026-11-23
 
 ### Changed
 - **Everything is in English now**: user interface, messages, scripts, tests and documentation
@@ -90,7 +90,7 @@ First version.
 - Only tested on Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17
 - Not yet tested with Discord and real speech (see `TESTING.md`)
 
-[Unreleased]: https://github.com/benborofn-lgtm/Node-Router/compare/v0.1.3...HEAD
+[0.1.4]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.4
 [0.1.3]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.3
 [0.1.2]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.2
 [0.1.1]: https://github.com/benborofn-lgtm/Node-Router/releases/tag/v0.1.1
