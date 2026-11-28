@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+- `tests/test_menu.py` failed its hover checks in Wayland sessions, because Wayland does not let
+  a test move the mouse pointer. The test now runs on XWayland there (offscreen without an X server).
+
 ## [0.1.6] – 2026-11-28
 
 ### Fixed

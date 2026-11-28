@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Benno1512 – Node-Router
-import sys, time
+import os, sys, time
 from pathlib import Path
+# The hover checks move the mouse pointer (QTest.mouseMove). Wayland does not let
+# clients do that, so in a Wayland session run this test on XWayland, or offscreen
+# if there is no X server. An explicit QT_QPA_PLATFORM is left alone.
+if os.environ.get("WAYLAND_DISPLAY") and not os.environ.get("QT_QPA_PLATFORM"):
+    os.environ["QT_QPA_PLATFORM"] = "xcb" if os.environ.get("DISPLAY") else "offscreen"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import NR, OUT, SKIP, finish, wav_file  # noqa: E402  (also sets sys.path)
 sys.path.insert(0, str(NR))
