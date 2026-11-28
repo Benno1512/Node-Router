@@ -38,7 +38,7 @@ import pw_backend as pw
 
 # DIY_ROUTER_CONFIG=<file> uses a different config (e.g. for tests or a second profile)
 CONFIG = paths.CONFIG
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 APP_ID = "node-router"
 REPO_URL = "https://github.com/Benno1512/Node-Router"
 ICON = paths.RES / "icon.svg"

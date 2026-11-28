@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.6] – 2026-11-28
+
 ### Fixed
 - Level meters showed full scale (0 dBFS) on newer PipeWire (seen with 1.6): `pw-record` writes
   a Sun AU stream there unless `--raw` is given. `--raw` is now used when available, and an AU
@@ -112,7 +114,8 @@ First version.
 - Only tested on Ubuntu 24.04, PipeWire 1.0.5 and WirePlumber 0.4.17
 - Not yet tested with Discord and real speech (see `TESTING.md`)
 
-[Unreleased]: https://github.com/Benno1512/Node-Router/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/Benno1512/Node-Router/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/Benno1512/Node-Router/releases/tag/v0.1.6
 [0.1.5]: https://github.com/Benno1512/Node-Router/releases/tag/v0.1.5
 [0.1.4]: https://github.com/Benno1512/Node-Router/releases/tag/v0.1.4
 [0.1.3]: https://github.com/Benno1512/Node-Router/releases/tag/v0.1.3
